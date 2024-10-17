@@ -23,7 +23,6 @@ export type ExternalEventDB = {
   duration: string;
   event_type_name: string;
   key: string;
-  properties: Record<string, any>;
   source?: ExternalSourceDB;
   source_key: string;
   start_time: string;
@@ -34,7 +33,6 @@ export type ExternalEventJson = {
   duration: string;
   event_type: string;
   key: string;
-  properties: Record<string, any>;
   start_time: string;
 };
 
@@ -44,7 +42,6 @@ export type ExternalEvent = {
   duration: string;
   duration_ms: number;
   pkey: ExternalEventPkey;
-  properties: Record<string, any>;
   source?: ExternalSourceDB;
   start_ms: number;
   start_time: string;
@@ -60,7 +57,7 @@ export type ExternalEventType = {
 // this doesn't do any actual filtering. extra keys in surplus of this are NOT checked.
 // Typescript doesn't really allow us to check these, so ensuring we don't push additional and unnecessary data to the DB should be caught
 // https://stackoverflow.com/questions/64263271/typescript-validate-excess-keys-on-value-returned-from-function
-export type ExternalEventInsertInput = Pick<ExternalEventDB, 'start_time' | 'duration' | 'properties'> &
+export type ExternalEventInsertInput = Pick<ExternalEventDB, 'start_time' | 'duration'> &
   Pick<ExternalEventPkey, 'event_type_name' | 'key'>;
 
 export type ExternalEventTypeInsertInput = Pick<ExternalEventType, 'name'>;

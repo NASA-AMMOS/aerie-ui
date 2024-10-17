@@ -17,7 +17,6 @@ export const createExternalSourceError: Writable<string | null> = writable(null)
 export const createExternalSourceTypeError: Writable<string | null> = writable(null);
 export const createDerivationGroupError: Writable<string | null> = writable(null);
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
-export const getExternalSourceMetadataError: Writable<string | null> = writable(null);
 export const derivationGroupVisibilityMap: Writable<Record<DerivationGroup['name'], boolean>> = writable({});
 
 /* Subscriptions. */

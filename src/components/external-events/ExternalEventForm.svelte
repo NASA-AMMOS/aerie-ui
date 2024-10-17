@@ -4,27 +4,18 @@
   import { field } from '../../stores/form';
   import { plugins } from '../../stores/plugins';
   import type { ExternalEvent } from '../../types/external-event';
-  import type { ExternalEventProperty } from '../../types/external-event-property';
   import type { FieldStore } from '../../types/form';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Input from '../form/Input.svelte';
-  import Properties from './Properties.svelte';
 
   export let externalEvent: ExternalEvent;
   export let showHeader: boolean = true;
 
   let startTimeField: FieldStore<string>;
-  let formProperties: ExternalEventProperty[] = [];
 
   $: startTimeField = field<string>(`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`);
-  $: formProperties = Object.entries(externalEvent.properties).map(externalEvent => {
-    return {
-      name: externalEvent[0],
-      value: externalEvent[1],
-    };
-  });
 </script>
 
 <div class="external-event-form-container">
@@ -73,15 +64,6 @@
             value={externalEvent.pkey.source_key}
           />
         </Input>
-      </Collapse>
-    </fieldset>
-
-    <fieldset>
-      <Collapse title="Properties">
-        <Properties {formProperties} />
-        {#if formProperties.length === 0}
-          <div class="st-typography-label">No Properties Found</div>
-        {/if}
       </Collapse>
     </fieldset>
   </div>

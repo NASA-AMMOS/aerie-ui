@@ -3,7 +3,10 @@
 <script lang="ts">
   import { selectedExternalEventId, selectedExternalEvents, selectExternalEvent } from '../../stores/external-event';
   import { viewTogglePanel } from '../../stores/views';
+  import type { TRowData } from '../../types/data-grid';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { ViewGridSection } from '../../types/view';
+  import { getExternalEventWholeRowId } from '../../utilities/externalEvents';
   import GridMenu from '../menus/GridMenu.svelte';
   import Panel from '../ui/Panel.svelte';
   import ExternalEventsTable from './ExternalEventsTable.svelte';
@@ -16,8 +19,10 @@
     viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ExternalEventFormPanel' } });
   }
 
-  function onSelectionChanged() {
-    selectExternalEvent($selectedExternalEventId);
+  function onSelectionChanged(e: CustomEvent<TRowData[]>) {
+    if (e.detail && e.detail.length) {
+      selectExternalEvent(getExternalEventWholeRowId(<ExternalEvent>e.detail[0]));
+    }
   }
 </script>
 
@@ -34,7 +39,7 @@
       {filterExpression}
       items={$selectedExternalEvents}
       on:rowDoubleClicked={onRowDoubleClicked}
-      on:selectionChanged={onSelectionChanged}
+      on:selectionChanged={e => onSelectionChanged(e)}
     />
   </svelte:fragment>
 </Panel>

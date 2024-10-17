@@ -13,7 +13,6 @@
     createExternalSourceTypeError,
     creatingExternalSource,
     externalSources,
-    getExternalSourceMetadataError,
     parsingError,
     planDerivationGroupLinks,
   } from '../../stores/external-source';
@@ -44,7 +43,6 @@
   import Collapse from '../Collapse.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
   import ExternalEventsTable from '../external-events/ExternalEventsTable.svelte';
-  import Properties from '../external-events/Properties.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
@@ -135,7 +133,6 @@
   let selectedSource: ExternalSourceSlim | null = null;
   let selectedSourceId: string | null = null;
   let selectedSourceEventTypes: string[] = [];
-  let selectedSourceMetadata: Record<string, any> = {};
 
   // Selected element variables
   let selectedEvent: ExternalEvent | null = null;
@@ -301,14 +298,6 @@
     )
     .then(fetched => (selectedSourceEventTypes = fetched));
 
-  $: effects
-    .getExternalSourceMetadata(
-      selectedSource ? selectedSource.key : null,
-      selectedSource ? selectedSource.derivation_group_name : null,
-      user,
-    )
-    .then(fetched => (selectedSourceMetadata = fetched));
-
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
     return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
   });
@@ -339,7 +328,6 @@
         $endTimeDoyField.value,
         parsedExternalSource.events,
         parsedExternalSource.source.key,
-        parsedExternalSource.source.metadata,
         $validAtDoyField.value,
         user,
       );
@@ -545,21 +533,6 @@
                 {/each}
               {:else}
                 <div class="st-typography-body collapse-important-text">No external event types found.</div>
-              {/if}
-            </Collapse>
-            <Collapse defaultExpanded={false} title="Metadata" tooltipContent="View Event Source Metadata">
-              {#if Object.keys(selectedSourceMetadata).length > 0}
-                <Properties
-                  formProperties={Object.entries(selectedSourceMetadata).map(metadataEntry => {
-                    return { name: metadataEntry[0], value: metadataEntry[1] };
-                  })}
-                />
-              {:else if $getExternalSourceMetadataError}
-                <div class="st-typography-body collapse-important-text">
-                  Failed to retrieve External Source metadata.
-                </div>
-              {:else}
-                <div class="st-typography-body collapse-important-text">Source has no metadata.</div>
               {/if}
             </Collapse>
             <Collapse
