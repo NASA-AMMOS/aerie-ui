@@ -4,7 +4,7 @@
   import { json } from '@codemirror/lang-json';
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
-  import { Compartment, EditorState, Prec } from '@codemirror/state';
+  import { Compartment, EditorState } from '@codemirror/state';
   import { type ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
@@ -116,14 +116,14 @@
         editorSequenceView.dispatch({
           effects: compartmentSeqHighlighter.reconfigure([
             EditorView.updateListener.of(debounce(vmlHighlightBlock, 250)),
-            Prec.highest([blockTheme, vmlBlockHighlighter]),
+            vmlBlockHighlighter,
           ]),
         });
       } else {
         editorSequenceView.dispatch({
           effects: compartmentSeqHighlighter.reconfigure([
             EditorView.updateListener.of(debounce(seqNHighlightBlock, 250)),
-            Prec.highest([blockTheme, seqqNBlockHighlighter]),
+            seqqNBlockHighlighter,
           ]),
         });
       }
@@ -234,9 +234,10 @@
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
+        blockTheme,
         compartmentSeqHighlighter.of([
           EditorView.updateListener.of(debounce(seqNHighlightBlock, 250)),
-          Prec.highest([blockTheme, seqqNBlockHighlighter]),
+          seqqNBlockHighlighter,
         ]),
         ...($sequenceAdaptation.autoIndent
           ? [compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent()))]
