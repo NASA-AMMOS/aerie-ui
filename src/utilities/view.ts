@@ -1,10 +1,9 @@
 import Ajv from 'ajv';
-import { ViewDefaultDiscreteOptions } from '../constants/view';
-import jsonSchema from '../schemas/ui-view-schema.json';
+import { ViewDefaultDiscreteOptions, viewSchemaVersion } from '../constants/view';
 import type { ActivityType } from '../types/activity';
 import type { ExternalEventType } from '../types/external-event';
 import type { ResourceType } from '../types/simulation';
-import type { View, ViewGridColumns, ViewGridRows } from '../types/view';
+import type { View, ViewDefinition, ViewGridColumns, ViewGridRows } from '../types/view';
 import {
   createRow,
   createTimeline,
@@ -300,6 +299,7 @@ export function generateDefaultView(
           ],
           columnStates: [],
         },
+        filteredDerivationGroups: [],
         grid: {
           columnSizes: '1fr 3px 3fr 3px 1fr',
           leftComponentBottom: 'SimulationPanel',
@@ -375,6 +375,7 @@ export function generateDefaultView(
         },
         timelines,
       },
+      version: viewSchemaVersion,
     },
     id: 0,
     name: 'Default View',
@@ -462,9 +463,11 @@ export function createRowSizes({ row1 = '1fr', row2 = '1fr' }: ViewGridRows, col
   return '1fr';
 }
 
-export function validateViewJSONAgainstSchema(json: any) {
+export async function validateViewJSONAgainstSchema(json: any) {
   try {
     const ajv = new Ajv();
+    const jsonSchemaPath = `../schemas/ui-view-schema-v${viewSchemaVersion}.json`;
+    const jsonSchema = await import(/* @vite-ignore */ jsonSchemaPath);
     const validate = ajv.compile(jsonSchema);
     const valid = validate(json);
     const errors = valid ? [] : validate.errors;
@@ -480,4 +483,131 @@ export function downloadView(view: View) {
   a.href = URL.createObjectURL(new Blob([JSON.stringify(view.definition, null, 2)], { type: 'application/json' }));
   a.download = view.name;
   a.click();
+}
+
+export async function applyViewMigrations(view: View): Promise<{
+  anyMigrationsApplied: boolean;
+  error: Error | null;
+  migratedView: View | null;
+}> {
+  try {
+    const { anyMigrationsApplied, error, migratedViewDefinition } = await applyViewDefinitionMigrations(
+      view.definition,
+    );
+    if (!migratedViewDefinition || error) {
+      return { anyMigrationsApplied: false, error, migratedView: null };
+    }
+    const migratedView: View = { ...view, definition: migratedViewDefinition };
+    return { anyMigrationsApplied, error, migratedView };
+  } catch (error) {
+    return { anyMigrationsApplied: false, error: error as Error, migratedView: null };
+  }
+}
+
+export function applyViewDefinitionMigrations(viewDefinition: ViewDefinition): {
+  anyMigrationsApplied: boolean;
+  error: Error | null;
+  migratedViewDefinition: ViewDefinition | null;
+} {
+  try {
+    // If the view version does not exist we will consider it to be version 0
+    const version = viewDefinition.version ?? 0;
+    const upMigrations: Record<number, (view: ViewDefinition) => ViewDefinition> = {
+      0: migrateViewDefinitionV0toV1,
+    };
+
+    // Iterate through versions between view version and latest view version
+    // and apply any migrations if found
+    let migratedViewDefinition = viewDefinition;
+    let anyMigrationsApplied = false;
+    for (let i = version; i < viewSchemaVersion; i++) {
+      if (upMigrations[i]) {
+        migratedViewDefinition = upMigrations[i](viewDefinition);
+        anyMigrationsApplied = true;
+      }
+    }
+
+    return { anyMigrationsApplied, error: null, migratedViewDefinition };
+  } catch (error) {
+    return { anyMigrationsApplied: false, error: error as Error, migratedViewDefinition: null };
+  }
+}
+
+export function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
+  /*
+    Summary of migrations:
+    - External events changes to row activity options
+    - ActivityTypesPanel rename to TimelineItemsPanel
+    - ConstraintViolationsPanel rename to ConstraintsPanel
+    - Remove deprecated ActivityLayer.activityHeight
+  */
+
+  const updatedGrid = structuredClone(viewDefinition.plan.grid);
+  const gridKeysToUpdate = [
+    'leftComponentTop',
+    'rightComponentTop',
+    'leftComponentBottom',
+    'rightComponentBottom',
+    'middleComponentBottom',
+  ];
+  const gridKeysToSwap: Record<string, string> = {
+    ActivityTypesPanel: 'TimelineItemsPanel',
+    ConstraintViolationsPanel: 'ConstraintsPanel',
+  };
+  Object.entries(updatedGrid).forEach(([key, value]) => {
+    if (gridKeysToUpdate.indexOf(key) > -1 && gridKeysToSwap[value as string]) {
+      // @ts-expect-error cannot resolve types here but this is safe
+      updatedGrid[key] = gridKeysToSwap[value];
+    }
+    return value;
+  });
+
+  return {
+    ...viewDefinition,
+    plan: {
+      ...viewDefinition.plan,
+      grid: updatedGrid,
+      timelines: viewDefinition.plan.timelines.map(timeline => {
+        return {
+          ...timeline,
+          rows: timeline.rows.map(row => {
+            const newRow = structuredClone(row);
+            // @ts-expect-error deprecated type def
+            if (row.activityOptions) {
+              newRow.discreteOptions = {
+                ...(newRow.discreteOptions ?? {}),
+                activityOptions: {
+                  // @ts-expect-error deprecated type def
+                  composition: newRow.activityOptions.composition,
+                  // @ts-expect-error deprecated type def
+                  hierarchyMode: newRow.activityOptions.hierarchyMode,
+                },
+                // @ts-expect-error deprecated type def
+                displayMode: newRow.activityOptions.displayMode,
+                externalEventOptions: {
+                  groupBy: 'event_type_name',
+                },
+                // @ts-expect-error deprecated type def
+                height: newRow.activityOptions.activityHeight,
+                // @ts-expect-error deprecated type def
+                labelVisibility: newRow.activityOptions.labelVisibility,
+              };
+              // @ts-expect-error deprecated type def
+              delete newRow.activityOptions;
+            }
+            newRow.layers = newRow.layers.map(layer => {
+              const newLayer = structuredClone(layer);
+              if (newLayer.chartType === 'activity') {
+                // @ts-expect-error deprecated type def
+                delete newLayer.activityHeight;
+              }
+              return newLayer;
+            });
+            return newRow;
+          }),
+        };
+      }),
+    },
+    version: 1,
+  };
 }

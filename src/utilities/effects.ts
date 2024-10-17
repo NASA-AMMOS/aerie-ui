@@ -253,7 +253,12 @@ import {
 } from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
-import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
+import {
+  applyViewDefinitionMigrations,
+  applyViewMigrations,
+  generateDefaultView,
+  validateViewJSONAgainstSchema,
+} from './view';
 
 function throwPermissionError(attemptedAction: string): never {
   throw Error(`You do not have permission to: ${attemptedAction}.`);
@@ -1061,6 +1066,31 @@ const effects = {
     } catch (e) {
       catchError('Unable To Be View Derivation Groups and External Types', e as Error);
       showFailureToast('Derivation Group/External Type Viewing Failed');
+    }
+  },
+
+  async createExternalSourceType(
+    sourceType: ExternalSourceTypeInsertInput,
+    user: User | null,
+  ): Promise<ExternalSourceType | undefined> {
+    try {
+      createExternalSourceTypeError.set(null);
+      const { createExternalSourceType: created } = await reqHasura(
+        gql.CREATE_EXTERNAL_SOURCE_TYPE,
+        { sourceType },
+        user,
+      );
+      if (created !== null) {
+        showSuccessToast('External Source Type Created Successfully');
+        return created as ExternalSourceType;
+      } else {
+        throw Error(`Unable to create external source type`);
+      }
+    } catch (e) {
+      catchError('External Source Type Create Failed', e as Error);
+      showFailureToast('External Source Type Create Failed');
+      createExternalSourceTypeError.set((e as Error).message);
+      return undefined;
     }
   },
 
@@ -4677,11 +4707,12 @@ const effects = {
 
   /**
    * Try and get the view from the query parameters, otherwise check if there's a default view set at the
-   * mission model level, otherwise just return a generated default view.
+   * mission model level, otherwise just return a generated default view. Performs view migration if requested.
    */
   async getView(
     query: URLSearchParams | null,
     user: User | null,
+    migrate: boolean = true,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
     externalEventTypes: ExternalEventType[] = [],
@@ -4691,15 +4722,40 @@ const effects = {
       if (query !== null) {
         const viewIdAsNumber = getSearchParameterNumber(SearchParameters.VIEW_ID, query);
 
+        // Derive view from url or model default
+        let view;
         if (viewIdAsNumber !== null) {
           const data = await reqHasura<View>(gql.GET_VIEW, { id: viewIdAsNumber }, user);
-          const { view } = data;
+          const { view: fetchedView } = data;
+          view = fetchedView;
+        } else if (defaultView !== null && defaultView !== undefined) {
+          view = defaultView;
+        }
 
-          if (view !== null) {
+        if (view) {
+          // Return view if not asked to migrate the view
+          if (!migrate) {
             return view;
           }
-        } else if (defaultView !== null && defaultView !== undefined) {
-          return defaultView;
+
+          // Otherwise perform any needed migrations
+          const { migratedView, error, anyMigrationsApplied } = await applyViewMigrations(view);
+          if (migratedView && anyMigrationsApplied) {
+            await effects.updateView(
+              migratedView.id,
+              { definition: migratedView.definition },
+              'View Automatically Migrated',
+              user,
+            );
+          }
+
+          // If migration failed catch the error and return default view
+          if (!migratedView) {
+            catchError('Unable to migrate view', error as Error);
+            showFailureToast(`Unable to migrate view: ${view.name}`);
+          } else {
+            return migratedView;
+          }
         }
       }
       return generateDefaultView(activityTypes, resourceTypes, externalEventTypes);
@@ -4882,10 +4938,14 @@ const effects = {
       });
 
       const viewJSON = JSON.parse(viewFileString);
-      const { errors, valid } = await effects.validateViewJSON(viewJSON);
+      const { migratedViewDefinition, error } = await applyViewDefinitionMigrations(viewJSON);
+      if (error) {
+        return { definition: null, errors: [(error.stack || error).toString()] };
+      }
+      const { errors, valid } = await effects.validateViewJSON(migratedViewDefinition);
 
       if (valid) {
-        return { definition: viewJSON };
+        return { definition: migratedViewDefinition };
       } else {
         return {
           definition: null,
@@ -6327,7 +6387,7 @@ const effects = {
     }
   },
 
-  async updateView(id: number, view: Partial<View>, user: User | null): Promise<boolean> {
+  async updateView(id: number, view: Partial<View>, message: string | null, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.UPDATE_VIEW(user, { owner: view.owner ?? null })) {
         throwPermissionError('update this view');
@@ -6335,7 +6395,7 @@ const effects = {
 
       const data = await reqHasura<Pick<View, 'id'>>(gql.UPDATE_VIEW, { id, view }, user);
       if (data.updatedView) {
-        showSuccessToast('View Updated Successfully');
+        showSuccessToast(message ?? 'View Updated Successfully');
         return true;
       } else {
         throw Error(`Unable to update view with ID: "${id}"`);
@@ -6518,7 +6578,7 @@ const effects = {
 
   async validateViewJSON(unValidatedView: unknown): Promise<{ errors?: string[]; valid: boolean }> {
     try {
-      const { errors, valid } = validateViewJSONAgainstSchema(unValidatedView);
+      const { errors, valid } = await validateViewJSONAgainstSchema(unValidatedView);
       return {
         errors:
           errors?.map(error => {
