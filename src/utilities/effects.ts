@@ -32,7 +32,6 @@ import {
   createExternalSourceTypeError,
   creatingExternalSource,
   derivationGroupPlanLinkError,
-  getExternalSourceMetadataError,
   parsingError,
 } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
@@ -97,13 +96,12 @@ import type {
 import type {
   DerivationGroup,
   DerivationGroupInsertInput,
-  ExternalSourceDB,
   ExternalSourceInsertInput,
   ExternalSourcePkey,
   ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
-  PlanDerivationGroup,
+  PlanDerivationGroup
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -894,7 +892,6 @@ const effects = {
     endTime: string,
     externalEvents: ExternalEventJson[],
     externalSourceKey: string,
-    externalSourceMetadata: object,
     validAt: string,
     user: User | null,
   ) {
@@ -944,7 +941,6 @@ const effects = {
           data: null, // updated after this map is created
         },
         key: externalSourceKey,
-        metadata: externalSourceMetadata,
         source_type_name: externalSourceTypeName,
         start_time: startTimeFormatted,
         valid_at: validAtFormatted,
@@ -992,7 +988,6 @@ const effects = {
             duration: externalEvent.duration,
             event_type_name: externalEvent.event_type,
             key: externalEvent.key,
-            properties: externalEvent.properties,
             start_time: externalEvent.start_time,
           });
         }
@@ -3759,7 +3754,6 @@ const effects = {
             key: event.key,
             source_key: event.source_key,
           },
-          properties: event.properties,
           start_ms: convertUTCToMs(event.start_time),
           start_time: event.start_time,
         });
@@ -3768,43 +3762,6 @@ const effects = {
     } catch (e) {
       catchError('Failed to retrieve external events.', e as Error);
       showFailureToast('External Events Retrieval Failed');
-      return [];
-    }
-  },
-
-  async getExternalSourceMetadata(
-    externalSourceKey: string | null,
-    externalSourceDerivationGroup: string | null,
-    user: User | null,
-  ): Promise<Record<string, any>> {
-    if (externalSourceKey === null || externalSourceDerivationGroup === null) {
-      return [];
-    }
-    try {
-      getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<ExternalSourceDB['metadata']>(
-        gql.GET_EXTERNAL_SOURCE_METADATA,
-        { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
-        user,
-      );
-      const { external_source } = data;
-      if (external_source) {
-        const { metadata }: Record<string, any> = external_source[0];
-        if (metadata === null) {
-          throw Error(
-            `Unable to get external source metadata for external source '${externalSourceKey}' (derivation group: '${externalSourceDerivationGroup}'). "metadata" field may not have been included in original source.`,
-          );
-        }
-        return metadata;
-      } else {
-        throw Error(
-          `Unable to get external source metadata for external source '${externalSourceKey}' (derivation group: '${externalSourceDerivationGroup}'). Source may not exist.`,
-        );
-      }
-    } catch (e) {
-      catchError(e as Error);
-      showFailureToast('External Source Metadata Retrieval Failed');
-      getExternalSourceMetadataError.set((e as Error).message);
       return [];
     }
   },

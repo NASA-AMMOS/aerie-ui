@@ -1486,7 +1486,6 @@ const gql = {
           derivation_group_name: {_eq: $derivationGroupName}
         }
       ) {
-        properties
         event_type_name
         key
         duration
@@ -1510,19 +1509,6 @@ const gql = {
             name
           }
         }
-      }
-    }
-  `,
-
-  GET_EXTERNAL_SOURCE_METADATA: `#graphql
-    query GetExternalSourceMetadata($derivationGroupName: String!, $sourceKey: String!) {
-      ${Queries.EXTERNAL_SOURCES}(
-        where: {
-          derivation_group_name: {_eq: $derivationGroupName},
-          key: {_eq: $sourceKey}
-        }
-      ) {
-        metadata
       }
     }
   `,
@@ -2750,7 +2736,6 @@ const gql = {
     subscription SubPlanExternalEventsDerivationGroup($derivation_group_names: [String!]!){
       events: ${Queries.DERIVED_EVENTS}(where: {derivation_group_name: {_in: $derivation_group_names}}) {
         external_event {
-          properties
           event_type_name
           key
           duration

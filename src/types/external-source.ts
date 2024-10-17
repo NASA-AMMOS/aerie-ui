@@ -14,7 +14,6 @@ export type ExternalSourceDB = {
   end_time: string;
   external_events: ExternalEventDB[];
   key: string;
-  metadata: Record<string, any>;
   owner: UserId;
   source_type_name: string;
   start_time: string;
@@ -26,7 +25,6 @@ export type ExternalSourceJson = {
   events: ExternalEventJson[];
   source: {
     key: string;
-    metadata: object;
     period: {
       end_time: string;
       start_time: string;
@@ -36,8 +34,8 @@ export type ExternalSourceJson = {
   };
 };
 
-// For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
-export type ExternalSourceSlim = Omit<ExternalSourceDB, 'external_events' | 'metadata'>;
+// For use in retrieval of source information sans bulky items like event lists (see stores)
+export type ExternalSourceSlim = Omit<ExternalSourceDB, 'external_events'>;
 
 // Similar to ExternalSourceDB, but uses ExternalSourcePkey to represent the primary key (key, derivation_group_name)
 export type ExternalSource = Omit<ExternalSourceDB, 'key' | 'derivation_group_name'> & { pkey: ExternalSourcePkey };
@@ -65,7 +63,7 @@ export type DerivationGroup = {
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSourceDB,
-  'source_type_name' | 'metadata' | 'start_time' | 'end_time' | 'valid_at'
+  'source_type_name' | 'start_time' | 'end_time' | 'valid_at'
 > &
   Pick<ExternalSourcePkey, 'key' | 'derivation_group_name'> & {
     external_events: {
