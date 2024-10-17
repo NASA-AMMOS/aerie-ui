@@ -207,7 +207,8 @@ test.describe.serial('Plan External Sources', () => {
     // Expand all collapse buttons and validate fields appear
     await page.getByRole('button', { name: `Derivation group ${externalSources.exampleDerivationGroup}` }).click();
     await page.getByRole('button', { name: externalSources.externalSourceFileName }).click();
-    await page.getByRole('button', { name: 'View Contained Event Types' }).click();
+    // TODO: Event types shown underneath derivation groups is work to-be-implemented!
+    //await page.getByRole('button', { name: 'View Contained Event Types' }).click();
 
     await expect(page.getByText('Key: ExampleExternalSource:')).toBeVisible();
     await expect(page.getByText('Source Type: Example External')).toBeVisible();
