@@ -678,7 +678,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_EXTENSIONS: () => true,
   GET_EXTERNAL_EVENTS: () => true,
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: () => true,
-  GET_EXTERNAL_SOURCE_METADATA: () => true,
   GET_MODELS: () => true,
   GET_PARCEL: () => true,
   GET_PARSED_CHANNEL_DICTIONARY: () => true,

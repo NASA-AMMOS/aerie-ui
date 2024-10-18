@@ -281,7 +281,6 @@ describe('Handle modal and requests in effects', () => {
         '2024-007T00:00:00',
         [],
         'ExampleSource.json',
-        {},
         '2024-001T00:00:00',
         mockUser,
       );
@@ -335,22 +334,23 @@ describe('Handle modal and requests in effects', () => {
     });
   });
 
-  describe('getExternalSourceMetadata', () => {
-    it('should correctly handle null responses', async () => {
-      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
-        external_source: null,
-      });
-      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+  // TODO: 'Metadata' will be included for external sources in the future
+  // describe('getExternalSourceMetadata', () => {
+  //   it('should correctly handle null responses', async () => {
+  //     vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+  //       external_source: null,
+  //     });
+  //     vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalSourceMetadata('test', 'test', mockUser);
+  //     await effects.getExternalSourceMetadata('test', 'test', mockUser);
 
-      expect(catchErrorSpy).toHaveBeenCalledWith(
-        Error(
-          "Unable to get external source metadata for external source 'test' (derivation group: 'test'). Source may not exist.",
-        ),
-      );
-    });
-  });
+  //     expect(catchErrorSpy).toHaveBeenCalledWith(
+  //       Error(
+  //         "Unable to get external source metadata for external source 'test' (derivation group: 'test'). Source may not exist.",
+  //       ),
+  //     );
+  //   });
+  // });
 
   describe('createActivityDirective', () => {
     it('should correctly handle null responses', async () => {
