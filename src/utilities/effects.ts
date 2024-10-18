@@ -186,6 +186,7 @@ import type {
 import type { Row, Timeline } from '../types/timeline';
 import type { View, ViewDefinition, ViewInsertInput, ViewSlim, ViewUpdateInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
+import { parseCdlDictionary, toAmpcsXml } from './codemirror/cdlDictionary';
 import { convertToQuery, getSearchParameterNumber, setQueryParam } from './generic';
 import gql, { convertToGQLArray } from './gql';
 import {
@@ -5671,6 +5672,12 @@ const effects = {
     try {
       if (!queryPermissions.CREATE_DICTIONARY(user)) {
         throwPermissionError(`upload a dictionary`);
+      }
+
+      if (dictionary.split('\n').find(line => /^PROJECT\s*:\s*"([^"]*)"/.test(line))) {
+        // convert cdl to ampcs format, consider moving to aerie backend after decision on XTCE
+        // eslint-disable-next-line no-control-regex
+        dictionary = toAmpcsXml(parseCdlDictionary(dictionary)).replaceAll(/[^\x00-\x7F]+/g, '');
       }
 
       const data = await reqHasura<{
