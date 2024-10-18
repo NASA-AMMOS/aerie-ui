@@ -383,7 +383,8 @@ C ECHO L01STR
       `@INPUT_PARAMS L01STR L02STR`,
       `@LOCALS L01INT L02INT L01UINT L02UINT`,
     ]);
-    permutations.forEach(async (ordering: string[]) => {
+
+    for (const ordering of permutations) {
       const input = ordering.join('\n\n');
       const actual = JSON.parse(await sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, 'id'));
       const expected = {
@@ -419,7 +420,7 @@ C ECHO L01STR
         ],
       };
       expect(actual).toEqual(expected);
-    });
+    }
   });
 
   it('Convert quoted strings', async () => {
