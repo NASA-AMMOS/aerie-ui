@@ -35,9 +35,10 @@
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
-  import { seqNHighlightBlock, seqqNBlockHighlighter, setupLanguageSupport } from '../../utilities/codemirror';
+  import { setupLanguageSupport } from '../../utilities/codemirror';
   import { blockTheme } from '../../utilities/codemirror/block';
   import type { CommandInfoMapper } from '../../utilities/codemirror/command-info-mapper';
+  import { seqNHighlightBlock, seqqNBlockHighlighter } from '../../utilities/codemirror/seq-n-highlighter';
   import { SeqNCommandInfoMapper } from '../../utilities/codemirror/seq-n-tree-utils';
   import { setupVmlLanguageSupport, vmlBlockHighlighter, vmlHighlightBlock } from '../../utilities/codemirror/vml';
   import { vmlAutoComplete } from '../../utilities/codemirror/vml-adaptation';
