@@ -3,7 +3,6 @@ import { LRLanguage, LanguageSupport, foldInside, foldNodeProp, syntaxTree } fro
 import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
-import { EditorView } from 'codemirror';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
 import {
   RULE_TIME_TAGGED_STATEMENT,
@@ -29,12 +28,6 @@ import { parser } from './vml.grammar';
 
 const blockMark = Decoration.mark({ class: 'cm-block-match' });
 
-export const blockTheme = EditorView.baseTheme({
-  '.cm-block-match': {
-    outline: '1px dashed',
-  },
-});
-
 const FoldBehavior: {
   [tokenName: string]: (node: SyntaxNode) => ReturnType<typeof foldInside>;
 } = {
@@ -46,7 +39,6 @@ const FoldBehavior: {
 export const VmlLanguage = LRLanguage.define({
   languageData: {
     commentTokens: { line: ';' },
-    getContainingCommand: () => {},
   },
   name: 'vml',
   parser: parser.configure({
@@ -127,36 +119,32 @@ export function setupVmlLanguageSupport(
   }
 }
 
+function timeTaggedToKeyword(node: SyntaxNode | undefined | null): SyntaxNode | undefined {
+  return node?.firstChild?.nextSibling?.firstChild?.firstChild ?? undefined;
+}
+
 export function vmlHighlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
   const tree = syntaxTree(viewUpdate.state);
   const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
   const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
   const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
   // walk up the tree to Time_tagged_statement, and then back down to the block command e.g. "ELSE"
-  const timeTaggedNode = getNearestAncestorNodeOfType(updatedSelectionNode, [RULE_TIME_TAGGED_STATEMENT]);
-  const statementNode = timeTaggedNode?.firstChild?.nextSibling?.firstChild;
-  if (!statementNode || !isBlockCommand(statementNode.name)) {
-    return [];
-  }
+  const timeTaggedNode = getNearestAncestorNodeOfType(updatedSelectionNode, [RULE_TIME_TAGGED_STATEMENT]) ?? undefined;
 
-  const stemNode = statementNode.firstChild;
-  if (!stemNode) {
+  const keywordNode = timeTaggedToKeyword(timeTaggedNode);
+  if (!keywordNode || !keywordNode.parent || !isBlockCommand(keywordNode.parent?.name)) {
     return [];
   }
 
   const blocks = computeBlocks(viewUpdate.state);
-  if (!blocks) {
-    return [];
-  }
-
   const pairs = Object.values(blocks);
-  const matchedNodes: SyntaxNode[] = [stemNode];
+  const matchedNodes: SyntaxNode[] = [keywordNode];
 
   // when cursor on end -- select else and if
   let current: SyntaxNode | undefined = timeTaggedNode;
   while (current) {
     current = pairs.find(block => block.end?.from === current!.from)?.start;
-    const pairedStemToken = current?.firstChild?.nextSibling?.firstChild?.firstChild;
+    const pairedStemToken = timeTaggedToKeyword(current);
     if (pairedStemToken) {
       matchedNodes.push(pairedStemToken);
     }
@@ -166,7 +154,7 @@ export function vmlHighlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
   current = timeTaggedNode;
   while (current) {
     current = pairs.find(block => block.start?.from === current!.from)?.end;
-    const pairedStemToken = current?.firstChild?.nextSibling?.firstChild?.firstChild;
+    const pairedStemToken = timeTaggedToKeyword(current);
     if (pairedStemToken) {
       matchedNodes.push(pairedStemToken);
     }

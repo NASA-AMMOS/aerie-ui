@@ -79,43 +79,48 @@
     parameterDictionaries: ParameterDictionary[],
   ) {
     const argArray: ArgTextDef[] = [];
-
     const precedingArgValues: string[] = [];
+    const parentRepeatLength = parentArgDef?.repeat?.arguments.length;
 
     if (args) {
       for (const node of commandInfoMapper.getArgumentsFromContainer(args)) {
-        if (node.name !== TOKEN_ERROR) {
-          let argDef =
-            argumentDefs &&
-            argumentDefs[
-              parentArgDef?.repeat?.arguments.length !== undefined
-                ? argArray.length % parentArgDef?.repeat?.arguments.length
-                : argArray.length
-            ];
-          if (commandDef && argDef) {
-            argDef = getCustomArgDef(
-              commandDef?.stem,
-              argDef,
-              precedingArgValues,
-              parameterDictionaries,
-              channelDictionary,
-            );
-          }
-
-          let children: ArgTextDef[] | undefined = undefined;
-          if (!!argDef && isFswCommandArgumentRepeat(argDef)) {
-            children = getArgumentInfo(node, argDef.repeat?.arguments, argDef, parameterDictionaries);
-          }
-          const argValue = editorSequenceView.state.sliceDoc(node.from, node.to);
-          argArray.push({
-            argDef,
-            children,
-            node,
-            parentArgDef,
-            text: argValue,
-          });
-          precedingArgValues.push(argValue);
+        if (node.name === TOKEN_ERROR) {
+          continue;
         }
+
+        let argDef: FswCommandArgument | undefined = undefined;
+        if (argumentDefs) {
+          let argDefIndex = argArray.length;
+          if (parentRepeatLength !== undefined) {
+            // for repeat args shift index
+            argDefIndex %= parentRepeatLength;
+          }
+          argDef = argumentDefs[argDefIndex];
+        }
+
+        if (commandDef && argDef) {
+          argDef = getCustomArgDef(
+            commandDef?.stem,
+            argDef,
+            precedingArgValues,
+            parameterDictionaries,
+            channelDictionary,
+          );
+        }
+
+        let children: ArgTextDef[] | undefined = undefined;
+        if (!!argDef && isFswCommandArgumentRepeat(argDef)) {
+          children = getArgumentInfo(node, argDef.repeat?.arguments, argDef, parameterDictionaries);
+        }
+        const argValue = editorSequenceView.state.sliceDoc(node.from, node.to);
+        argArray.push({
+          argDef,
+          children,
+          node,
+          parentArgDef,
+          text: argValue,
+        });
+        precedingArgValues.push(argValue);
       }
     }
     // add entries for defined arguments missing from editor

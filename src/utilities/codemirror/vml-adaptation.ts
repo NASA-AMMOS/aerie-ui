@@ -35,6 +35,8 @@ export function vmlAutoComplete(
         })),
       };
     } else if (nodeCurrent.name === TOKEN_STRING_CONST) {
+      // also show if before argument
+
       const containingStatement = getNearestAncestorNodeOfType(nodeCurrent, [RULE_STATEMENT]);
       if (containingStatement) {
         const functionNameNode = containingStatement.firstChild?.getChild(RULE_FUNCTION_NAME);
@@ -103,7 +105,7 @@ function getDefaultArgumentValue(commandDictionary: CommandDictionary, argDef: F
   return '""';
 }
 
-export function statementTypeCompletions() {
+export function statementTypeCompletions(): string[] {
   return [
     `WHILE condition DO`,
     `END_WHILE`,

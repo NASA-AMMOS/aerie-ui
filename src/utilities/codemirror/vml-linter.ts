@@ -7,6 +7,10 @@ import type { EditorView } from 'codemirror';
 import { closest } from 'fastest-levenshtein';
 import { VmlLanguage } from './vml';
 import {
+  RULE_CALL_PARAMETER,
+  RULE_CALL_PARAMETERS,
+  RULE_FUNCTION_NAME,
+  RULE_ISSUE,
   TOKEN_DOUBLE_CONST,
   TOKEN_ERROR,
   TOKEN_HEX_CONST,
@@ -52,8 +56,8 @@ function validateCommands(commandDictionary: CommandDictionary, docText: string,
     const { node } = cursor;
     const tokenType = node.type.name;
 
-    if (tokenType === 'Issue') {
-      const functionNameNode = node.getChild('Function_name');
+    if (tokenType === RULE_ISSUE) {
+      const functionNameNode = node.getChild(RULE_FUNCTION_NAME);
       if (functionNameNode) {
         const functionName = docText.slice(functionNameNode.from, functionNameNode.to);
         const commandDef = commandDictionary.fswCommandMap[functionName];
@@ -97,7 +101,7 @@ function validateArguments(
   docText: string,
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const parametersNode = functionNode.getChild('Call_parameters')?.getChildren('Call_parameter') ?? [];
+  const parametersNode = functionNode.getChild(RULE_CALL_PARAMETERS)?.getChildren(RULE_CALL_PARAMETER) ?? [];
   const functionName = docText.slice(functionNameNode.from, functionNameNode.to);
   for (let i = 0; i < commandDef.arguments.length; i++) {
     const argDef: FswCommandArgument | undefined = commandDef.arguments[i];
