@@ -1,6 +1,7 @@
 import type { SyntaxNode } from '@lezer/common';
 import {
   RULE_ARGS,
+  RULE_COMMAND,
   RULE_GROUND_NAME,
   RULE_REQUEST_NAME,
   RULE_SEQUENCE_NAME,
@@ -15,7 +16,7 @@ import {
   TOKEN_REQUEST,
   TOKEN_STRING,
 } from '../../constants/seq-n-grammar-constants';
-import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
+import { getFromAndTo, getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
 import type { CommandInfoMapper } from './command-info-mapper';
 
 export function getNameNode(stepNode: SyntaxNode | null) {
@@ -53,19 +54,15 @@ export class SeqNCommandInfoMapper implements CommandInfoMapper {
     return ' ' + values.join(' ');
   }
 
-  getArgumentAppendPosition(commandNode: SyntaxNode | null): number | undefined {
-    if (!commandNode) {
-      return undefined;
+  getArgumentAppendPosition(commandOrRepeatArgNode: SyntaxNode | null): number | undefined {
+    if (commandOrRepeatArgNode?.name === RULE_COMMAND) {
+      const argsNode = commandOrRepeatArgNode.getChild('Args');
+      const stemNode = commandOrRepeatArgNode.getChild('Stem');
+      return getFromAndTo([stemNode, argsNode]).to;
+    } else if (commandOrRepeatArgNode?.name === TOKEN_REPEAT_ARG) {
+      return commandOrRepeatArgNode.to - 1;
     }
-    let insertPosition: undefined | number = undefined;
-    const argsNode = commandNode.getChild('Args');
-    const stemNode = commandNode.getChild('Stem');
-    if (stemNode) {
-      insertPosition = argsNode?.to ?? stemNode.to;
-    } else if (commandNode.name === TOKEN_REPEAT_ARG) {
-      insertPosition = commandNode.to - 1;
-    }
-    return insertPosition;
+    return undefined;
   }
 
   getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null {
