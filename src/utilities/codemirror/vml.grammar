@@ -211,7 +211,6 @@ Optional_value_list {
   (COMMA Input_value)*
 }
 
-// input_value: range {vml_create_range(1, 0);} | constant {vml_create_default(0);};
 Input_value {
   Constant
   | Input_Range {

@@ -26,12 +26,16 @@ import {
   RULE_PARAMETER,
   RULE_PARAMETERS,
   RULE_VARIABLE_NAME,
+  TOKEN_ABSOLUTE_TIME,
   TOKEN_DOUBLE,
   TOKEN_DOUBLE_CONST,
   TOKEN_HEX_CONST,
   TOKEN_INT,
   TOKEN_INT_CONST,
   TOKEN_INT_RANGE_CONST,
+  TOKEN_RELATIVE_TIME,
+  TOKEN_STRING,
+  TOKEN_TIME,
   TOKEN_UINT,
   TOKEN_UINT_CONST,
 } from './vml-constants';
@@ -102,7 +106,12 @@ function inputToArgument(parameterNode: SyntaxNode, vml: string): FswCommandArgu
     return null;
   }
 
+  const default_value: number | string | null = parseDefaultValue(parameterNode.firstChild, vml);
   const description = parameterNodeToDescription(parameterNode, vml);
+  const units = ''; // not specified in VML
+  const range = parseRange(parameterNode.firstChild, vml);
+  // string arguments with ranges of string[] could converted to enums
+  // consider making singleton ranges 'fixed_string' type
 
   const dataKindNode = parameterNode.firstChild?.getChild(RULE_DATA_KIND)?.firstChild;
   if (dataKindNode) {
@@ -118,36 +127,54 @@ function inputToArgument(parameterNode: SyntaxNode, vml: string): FswCommandArgu
           } as const
         )[dataKindNode.name];
 
-        const default_value: number | string | null = parseDefaultValue(parameterNode.firstChild, vml);
-
-        const range = parseRange(parameterNode.firstChild, vml);
+        const bit_length: number = dataKindNode.name === TOKEN_DOUBLE ? 64 : 32;
 
         return {
           arg_type,
-          bit_length: 0,
+          bit_length,
           default_value: typeof default_value === 'number' ? default_value : null,
           description,
           name,
           range: isNumericRange(range) ? range : null,
-          units: '',
+          units,
+        };
+      }
+      case TOKEN_STRING: {
+        return {
+          arg_type: 'var_string',
+          default_value: typeof default_value === 'string' ? default_value : null,
+          description,
+          max_bit_length: null,
+          name,
+          prefix_bit_length: null,
+          valid_regex: null,
+        };
+      }
+      case TOKEN_TIME:
+      case TOKEN_ABSOLUTE_TIME:
+      case TOKEN_RELATIVE_TIME: {
+        return {
+          arg_type: 'time',
+          bit_length: 32,
+          default_value,
+          description,
+          name,
+          units,
         };
       }
     }
   }
 
   // default to string type, no specific handling for LOGICAL, UNKNOWN
-  if (name) {
-    return {
-      arg_type: 'var_string',
-      default_value: '',
-      description,
-      max_bit_length: null,
-      name,
-      prefix_bit_length: null,
-      valid_regex: null,
-    };
-  }
-  return null;
+  return {
+    arg_type: 'var_string',
+    default_value: '',
+    description,
+    max_bit_length: null,
+    name,
+    prefix_bit_length: null,
+    valid_regex: null,
+  };
 }
 
 function isNumericRange(range: any): range is NumericRange {
@@ -180,7 +207,7 @@ function parseRange(parameterNode: SyntaxNode | null, vml: string): null | strin
       })
       .filter((maybeRangeValue): maybeRangeValue is number | string | NumericRange => !!maybeRangeValue);
 
-    // mixed arrays aren't resolved due to undefinied meaning
+    // mixed arrays aren't resolved due to undefined meaning
     if (rangeValues.every(rangeValue => typeof rangeValue === 'number')) {
       return rangeValues as number[];
     } else if (rangeValues.every(rangeValue => typeof rangeValue === 'string')) {

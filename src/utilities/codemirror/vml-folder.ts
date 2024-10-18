@@ -48,7 +48,7 @@ export function isBlockCommand(stem: string): boolean {
   return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
 }
 
-function closesBlock(stem: string, blockStem: string) {
+function closesBlock(stem: string, blockStem: string): boolean {
   switch (stem) {
     case RULE_END_IF:
       return [RULE_IF, RULE_ELSE_IF, RULE_ELSE].includes(blockStem);
@@ -134,22 +134,23 @@ export function computeBlocks(state: EditorState): TreeState {
   return blocksForState.get(state)!;
 }
 
-export const vmlBlockFolder = foldService.of((state: EditorState, start, end) => {
-  const blocks = computeBlocks(state);
-  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(end, -1); node; node = node.parent) {
-    if (node.from < start) {
-      break;
+export const vmlBlockFolder = foldService.of(
+  (state: EditorState, start: number, end: number): null | { from: number; to: number } => {
+    const blocks = computeBlocks(state);
+    for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(end, -1); node; node = node.parent) {
+      if (node.from < start) {
+        break;
+      }
+
+      const block = blocks[start];
+      if (block?.startPos !== undefined && block?.endPos !== undefined) {
+        return {
+          from: block.startPos,
+          to: block.endPos,
+        };
+      }
     }
 
-    // const block = blocks[node.from];
-    const block = blocks[start];
-    if (block?.startPos !== undefined && block?.endPos !== undefined) {
-      return {
-        from: block.startPos,
-        to: block.endPos,
-      };
-    }
-  }
-
-  return null;
-});
+    return null;
+  },
+);

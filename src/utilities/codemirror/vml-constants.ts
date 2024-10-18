@@ -53,6 +53,9 @@ export const TOKEN_INT = 'INT';
 export const TOKEN_UINT = 'UINT';
 export const TOKEN_DOUBLE = 'DOUBLE';
 export const TOKEN_STRING = 'STRING';
+export const TOKEN_TIME = 'TIME';
+export const TOKEN_ABSOLUTE_TIME = 'ABSOLUTE_TIME';
+export const TOKEN_RELATIVE_TIME = 'RELATIVE_TIME';
 
 export const TOKEN_ERROR = '⚠';
 export const TOKEN_COMMA = 'COMMA';
