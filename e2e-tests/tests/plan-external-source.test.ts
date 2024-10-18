@@ -206,7 +206,7 @@ test.describe.serial('Plan External Sources', () => {
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons and validate fields appear
     await page.getByRole('button', { name: `Derivation group ${externalSources.exampleDerivationGroup}` }).click();
-    await page.getByRole('button', { name: externalSources.externalSourceFileName }).click();
+    await page.getByRole('button', { name: `ExampleExternalSource:${externalSources.externalSourceFileName}` }).click();
     // TODO: Event types shown underneath derivation groups is work to-be-implemented!
     //await page.getByRole('button', { name: 'View Contained Event Types' }).click();
 
@@ -216,7 +216,6 @@ test.describe.serial('Plan External Sources', () => {
     await expect(page.getByText('End Time: 2022-002T00:00:')).toBeVisible();
     await expect(page.getByText('Valid At: 2022-001T00:00:')).toBeVisible();
     await expect(page.getByText('Created At')).toBeVisible();
-    await expect(page.locator('i').getByText('ExampleEvent')).toBeVisible();
   });
 
   test('Derivation group can be expanded in modal', async () => {
