@@ -1,19 +1,13 @@
 import { type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-import type { ISequenceAdaptation } from '../../types/sequencing';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
 import { RULE_FUNCTION_NAME, RULE_ISSUE, RULE_STATEMENT, TOKEN_STRING_CONST } from './vml-constants';
 import { getArgumentPosition } from './vml-tree-utils';
 
-export const VmlAdaptation: Partial<ISequenceAdaptation> = {
-  // autoComplete: vmlAutoComplete,
-};
-
 export function vmlAutoComplete(
   _channelDictionary: ChannelDictionary | null,
   commandDictionary: CommandDictionary | null,
-  // ): Extension {
 ): (context: CompletionContext) => CompletionResult | null {
   return (context: CompletionContext) => {
     if (!commandDictionary) {

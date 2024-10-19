@@ -5,7 +5,11 @@ export const RULE_TEXT_FILE = 'Text_file';
 export const RULE_FUNCTIONS = 'Functions';
 export const RULE_FUNCTION = 'Function';
 
+export const RULE_ABSOLUTE_SEQUENCE = 'Absolute_Sequence';
+
 export const RULE_COMMON_FUNCTION = 'Common_Function';
+
+export const RULE_BODY = 'Body';
 
 export const RULE_BLOCK = 'Block';
 
@@ -22,6 +26,7 @@ export const RULE_END_FOR = 'End_for';
 
 export const RULE_ASSIGNMENT = 'Assignment';
 export const RULE_STATEMENT = 'Statement';
+export const RULE_TIME_TAGGED_STATEMENTS = 'Time_tagged_statements';
 export const RULE_TIME_TAGGED_STATEMENT = 'Time_tagged_statement';
 export const RULE_VM_MANAGEMENT = 'Vm_management';
 export const RULE_SPAWN = 'Spawn';

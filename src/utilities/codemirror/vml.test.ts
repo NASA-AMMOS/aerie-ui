@@ -4,11 +4,19 @@ import { assert, describe, expect, it } from 'vitest';
 import { VmlLanguage } from './vml';
 import { vmlBlockLibraryToCommandDictionary } from './vml-block-library';
 import {
+  RULE_ABSOLUTE_SEQUENCE,
+  RULE_ASSIGNMENT,
   RULE_BLOCK,
+  RULE_BODY,
   RULE_COMMON_FUNCTION,
   RULE_FUNCTION,
   RULE_FUNCTION_NAME,
   RULE_FUNCTIONS,
+  RULE_SIMPLE_CALL,
+  RULE_SPAWN,
+  RULE_TEXT_FILE,
+  RULE_TIME_TAGGED_STATEMENT,
+  RULE_TIME_TAGGED_STATEMENTS,
   TOKEN_ERROR,
 } from './vml-constants';
 
@@ -59,6 +67,32 @@ END_BODY
 END_MODULE
 `;
     assertNoErrorNodes(input);
+
+    const tree = VmlLanguage.parser.parse(input);
+    expect(tree.topNode.name).toBe(RULE_TEXT_FILE);
+
+    const functionsNode = tree.topNode.getChild(RULE_FUNCTIONS);
+    expect(functionsNode).toBeDefined();
+
+    const functionNodes = functionsNode?.getChildren(RULE_FUNCTION);
+    expect(functionNodes).toBeDefined();
+    expect(functionNodes?.length).toBe(1);
+
+    const seqNode0 = functionNodes?.[0].getChild(RULE_ABSOLUTE_SEQUENCE)?.getChild(RULE_COMMON_FUNCTION);
+    expect(seqNode0).toBeDefined();
+
+    const functionNameNode = seqNode0?.getChild(RULE_FUNCTION_NAME);
+    expect(functionNameNode).toBeDefined();
+    expect(nodeContents(input, functionNameNode!)).toBe('master_sequence_day_154');
+
+    const statementNodes = seqNode0
+      ?.getChild(RULE_BODY)
+      ?.getChild(RULE_TIME_TAGGED_STATEMENTS)
+      ?.getChildren(RULE_TIME_TAGGED_STATEMENT);
+    expect(statementNodes?.length).toBe(3);
+    expect(statementNodes?.[0].firstChild?.nextSibling?.firstChild?.firstChild?.name).toBe(RULE_SPAWN);
+    expect(statementNodes?.[1].firstChild?.nextSibling?.firstChild?.name).toBe(RULE_ASSIGNMENT);
+    expect(statementNodes?.[2].firstChild?.nextSibling?.firstChild?.name).toBe(RULE_SIMPLE_CALL);
   });
 
   it('module with block', () => {
