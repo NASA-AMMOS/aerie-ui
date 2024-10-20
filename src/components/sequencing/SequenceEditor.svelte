@@ -265,10 +265,10 @@
     const sequence = viewUpdate.state.doc.toString();
     disableCopyAndExport = sequence === '';
     const tree = syntaxTree(viewUpdate.state);
-    const output = await selectedOutputFormat?.toOutputFormat?.(tree, sequence, commandDictionary, sequenceName);
+    let output = await selectedOutputFormat?.toOutputFormat?.(tree, sequence, commandDictionary, sequenceName);
 
     if ($sequenceAdaptation?.modifyOutput !== undefined && output !== undefined) {
-      $sequenceAdaptation?.modifyOutput(output, parameterDictionaries, channelDictionary);
+      output = $sequenceAdaptation?.modifyOutput(output, parameterDictionaries, channelDictionary);
     }
 
     editorOutputView.dispatch({ changes: { from: 0, insert: output, to: editorOutputView.state.doc.length } });
