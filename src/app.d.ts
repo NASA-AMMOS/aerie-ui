@@ -71,12 +71,12 @@ declare global {
           whileLoop: string[];
         };
         modifyOutput?: (
-          output: SeqJson | any,
+          output: string | any,
           parameterDictionaries: ParameterDictionary[],
           channelDictionary: ChannelDictionary | null,
         ) => any;
         modifyOutputParse?: (
-          output: SeqJson | any,
+          output: string | any,
           parameterDictionaries: ParameterDictionary[],
           channelDictionary: ChannelDictionary | null,
         ) => any;
