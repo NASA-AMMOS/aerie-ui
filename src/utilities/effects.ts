@@ -6426,12 +6426,14 @@ const effects = {
       const uploadedDatasetId = await reqGateway<number | null>('/uploadDataset', 'POST', body, user, true);
 
       if (uploadedDatasetId != null) {
+        showSuccessToast('External Dataset Uploaded Successfully');
         return uploadedDatasetId;
       }
 
-      return null;
+      throw Error('External Dataset Upload Failed');
     } catch (e) {
       catchError(e as Error);
+      showFailureToast('External Dataset Upload Failed');
       return null;
     }
   },
