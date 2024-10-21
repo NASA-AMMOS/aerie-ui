@@ -574,7 +574,11 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission([Queries.DELETE_PLAN, Queries.DELETE_SCHEDULING_SPECIFICATION], user) && isPlanOwner(user, plan))
+      (getPermission(
+        [Queries.DELETE_PLAN, Queries.DELETE_SCHEDULING_SPECIFICATION, Queries.DELETE_PLAN_DERIVATION_GROUP],
+        user,
+      ) &&
+        isPlanOwner(user, plan))
     );
   },
   DELETE_PLAN_COLLABORATOR: (user: User | null, plan: PlanWithOwners): boolean => {
@@ -1569,3 +1573,4 @@ export {
   isUserOwner,
   queryPermissions,
 };
+
