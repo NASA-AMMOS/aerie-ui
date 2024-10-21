@@ -99,9 +99,7 @@ export function selectExternalEvent(
   switchToPanel = false,
 ): void {
   if (externalEventId !== null) {
-    console.log('xreamture');
     selectedExternalEventId.set(externalEventId);
-    console.log(externalEventId, switchToTable, switchToPanel);
     if (switchToTable) {
       viewUpdateGrid({ middleComponentBottom: 'ExternalEventsTablePanel' });
     }
