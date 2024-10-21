@@ -75,7 +75,7 @@
       <CloseIcon />
     </button>
     <Input layout="stacked">
-      <label for="file">Resource File</label>
+      <label class="st-typography-body" for="file">Resource File</label>
       <input
         class="w-100"
         name="file"
