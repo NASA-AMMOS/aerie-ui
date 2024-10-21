@@ -42,10 +42,6 @@ export function seqNHighlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
   }
 
   const blocks = computeBlocks(viewUpdate.state);
-  if (!blocks) {
-    return [];
-  }
-
   const pairs = Object.values(blocks);
   const matchedNodes: SyntaxNode[] = [stemNode];
 

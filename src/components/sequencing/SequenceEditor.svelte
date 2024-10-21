@@ -74,6 +74,9 @@
     sequence: { input: string; output: string };
   }>();
 
+  const debouncedSeqNHighlightBlock = debounce(seqNHighlightBlock, 250);
+  const debouncedVmlHighlightBlock = debounce(vmlHighlightBlock, 250);
+
   let clientHeightGridRightBottom: number;
   let clientHeightGridRightTop: number;
   let compartmentSeqJsonLinter: Compartment;
@@ -116,14 +119,14 @@
       if (sequenceName && inVmlMode()) {
         editorSequenceView.dispatch({
           effects: compartmentSeqHighlighter.reconfigure([
-            EditorView.updateListener.of(debounce(vmlHighlightBlock, 250)),
+            EditorView.updateListener.of(debouncedVmlHighlightBlock),
             vmlBlockHighlighter,
           ]),
         });
       } else {
         editorSequenceView.dispatch({
           effects: compartmentSeqHighlighter.reconfigure([
-            EditorView.updateListener.of(debounce(seqNHighlightBlock, 250)),
+            EditorView.updateListener.of(debouncedSeqNHighlightBlock),
             seqqNBlockHighlighter,
           ]),
         });
