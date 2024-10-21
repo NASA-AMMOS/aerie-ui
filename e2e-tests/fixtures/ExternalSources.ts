@@ -95,7 +95,7 @@ export class ExternalSources {
     // Assumes the selected source was the test source, and selects the specific event from it
     // NOTE: This may not be the case, and should be re-visited when we implement deletion for External Sources!
     await this.selectSource(sourceName);
-    await this.page.getByRole('gridcell', { name: 'ExampleEvent:1/sc/sc1:1' }).click();
+    await this.page.getByRole('gridcell', { name: eventName }).click();
   }
 
   async selectSource(sourceName: string = 'example-external-source.json') {
