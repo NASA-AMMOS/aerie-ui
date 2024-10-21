@@ -200,9 +200,7 @@ test.describe.serial('Plan External Sources', () => {
     }
     // Wait until the sources are loaded
     await page
-      .locator('div')
-      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
-      .locator('p')
+      .getByText('No sources in this group. Delete Empty Derivation Group')
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons and validate fields appear
     await page.getByRole('button', { name: `Derivation group ${externalSources.exampleDerivationGroup}` }).click();
