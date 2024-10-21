@@ -42,6 +42,7 @@
 
   let argInfoArray: ArgTextDef[] = [];
   let commandNode: SyntaxNode | null = null;
+  let commandNameNode: SyntaxNode | null = null;
   let commandDef: FswCommand | null = null;
   let editorArgInfoArray: ArgTextDef[] = [];
   let missingArgDefArray: FswCommandArgument[] = [];
