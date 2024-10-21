@@ -268,7 +268,7 @@
     let output = await selectedOutputFormat?.toOutputFormat?.(tree, sequence, commandDictionary, sequenceName);
 
     if ($sequenceAdaptation?.modifyOutput !== undefined && output !== undefined) {
-      output = $sequenceAdaptation?.modifyOutput(output, parameterDictionaries, channelDictionary);
+      output = `${$sequenceAdaptation.modifyOutput(output, parameterDictionaries, channelDictionary)}`;
     }
 
     editorOutputView.dispatch({ changes: { from: 0, insert: output, to: editorOutputView.state.doc.length } });
