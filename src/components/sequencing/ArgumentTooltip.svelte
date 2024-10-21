@@ -14,7 +14,11 @@
   $: if (commandDictionary && arg?.arg_type === 'enum') {
     const enumValues = getAllEnumSymbols(commandDictionary.enumMap, arg.enum_name);
     const values = enumValues ?? [];
-    enumSymbolsDisplayStr = `${values.slice(0, MAX_ENUMS_TO_DISPLAY).join('  |  ')}${values.length > MAX_ENUMS_TO_DISPLAY ? '...' + (values.length - MAX_ENUMS_TO_DISPLAY) + ' more' : ''}`;
+    enumSymbolsDisplayStr = values.slice(0, MAX_ENUMS_TO_DISPLAY).join('  |  ');
+    const numHiddenValues = values.length - MAX_ENUMS_TO_DISPLAY;
+    if (numHiddenValues > 0) {
+      enumSymbolsDisplayStr += ` ... ${numHiddenValues} more`;
+    }
   }
 </script>
 
