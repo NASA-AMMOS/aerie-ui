@@ -53,6 +53,8 @@ export const RULE_OPTIONAL_VALUE_LIST = 'Optional_value_list';
 export const RULE_INPUT_RANGE = 'Input_Range';
 export const RULE_INPUT_VALUE = 'Input_value';
 
+export const GROUP_STATEMENT_SUB = 'StatementSub';
+
 // Terminals in grammar
 export const TOKEN_INT = 'INT';
 export const TOKEN_UINT = 'UINT';

@@ -4,6 +4,7 @@ import { assert, describe, expect, it } from 'vitest';
 import { VmlLanguage } from './vml';
 import { vmlBlockLibraryToCommandDictionary } from './vml-block-library';
 import {
+  GROUP_STATEMENT_SUB as GROUP_STATEMENT_SUBTYPES,
   RULE_ABSOLUTE_SEQUENCE,
   RULE_ASSIGNMENT,
   RULE_BLOCK,
@@ -14,9 +15,11 @@ import {
   RULE_FUNCTIONS,
   RULE_SIMPLE_CALL,
   RULE_SPAWN,
+  RULE_STATEMENT,
   RULE_TEXT_FILE,
   RULE_TIME_TAGGED_STATEMENT,
   RULE_TIME_TAGGED_STATEMENTS,
+  RULE_VM_MANAGEMENT,
   TOKEN_ERROR,
 } from './vml-constants';
 
@@ -93,6 +96,16 @@ END_MODULE
     expect(statementNodes?.[0].firstChild?.nextSibling?.firstChild?.firstChild?.name).toBe(RULE_SPAWN);
     expect(statementNodes?.[1].firstChild?.nextSibling?.firstChild?.name).toBe(RULE_ASSIGNMENT);
     expect(statementNodes?.[2].firstChild?.nextSibling?.firstChild?.name).toBe(RULE_SIMPLE_CALL);
+
+    expect(statementNodes?.[0].getChild(RULE_STATEMENT)?.getChild(GROUP_STATEMENT_SUBTYPES)?.name).toBe(
+      RULE_VM_MANAGEMENT,
+    );
+    expect(statementNodes?.[1].getChild(RULE_STATEMENT)?.getChild(GROUP_STATEMENT_SUBTYPES)?.name).toBe(
+      RULE_ASSIGNMENT,
+    );
+    expect(statementNodes?.[2].getChild(RULE_STATEMENT)?.getChild(GROUP_STATEMENT_SUBTYPES)?.name).toBe(
+      RULE_SIMPLE_CALL,
+    );
   });
 
   it('module with block', () => {

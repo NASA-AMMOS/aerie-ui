@@ -124,7 +124,7 @@ Common_Function {
 }
 
 Statement {
-  statement_no_endline {
+  statement_no_endline[@isGroup=StatementSub] {
     Issue
     | Issue_dynamic
     | Issue_hex
