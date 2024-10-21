@@ -474,8 +474,8 @@ const gql = {
     mutation CreateExternalEventType($eventType: external_event_type_insert_input!) {
       createExternalEventType: ${Queries.INSERT_EXTERNAL_EVENT_TYPE_ONE}(object: $eventType) {
         name
-        properties
-        required_properties
+        metadata
+        required_metadata
       }
     }
   `,
@@ -1461,7 +1461,7 @@ const gql = {
         derivation_group_name: {_eq: $derivationGroupName}
       }
     ) {
-      properties
+      metadata
       event_type_name
       key
       duration
@@ -1478,7 +1478,7 @@ const gql = {
       event_type_name
       start_time
       duration
-      properties
+      metadata
     }
   }
   `,
@@ -1487,8 +1487,8 @@ const gql = {
     query GetExternalEventTypes {
       external_event_types: ${Queries.EXTERNAL_EVENT_TYPES} {
         name
-        properties
-        required_properties
+        metadata
+        required_metadata
       }
     }
   `,
@@ -1505,8 +1505,8 @@ const gql = {
         external_events {
           external_event_type {
             name
-            properties
-            required_properties
+            metadata
+            required_metadata
           }
         }
       }
@@ -1717,8 +1717,8 @@ const gql = {
             external_events {
               external_event_type {
                 name
-                properties
-                required_properties
+                metadata
+                required_metadata
               }
             }
           }
@@ -2471,8 +2471,8 @@ const gql = {
     subscription SubExternalEventTypes {
       models: ${Queries.EXTERNAL_EVENT_TYPES}(order_by: { name: asc }) {
         name
-        properties
-        required_properties
+        metadata
+        required_metadata
       }
     }
   `,
