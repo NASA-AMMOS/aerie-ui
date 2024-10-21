@@ -39,7 +39,7 @@
       {filterExpression}
       items={$selectedExternalEvents}
       on:rowDoubleClicked={onRowDoubleClicked}
-      on:selectionChanged={e => onSelectionChanged(e)}
+      on:selectionChanged={onSelectionChanged}
     />
   </svelte:fragment>
 </Panel>

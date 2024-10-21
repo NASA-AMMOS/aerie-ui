@@ -25,7 +25,6 @@
     height: 24px;
     justify-content: center;
     line-height: 24px;
-    overflow: hidden;
     padding: 4px 8px 4px 0px;
     white-space: nowrap;
   }
