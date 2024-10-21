@@ -119,6 +119,7 @@
   import type { ActivityErrorCounts } from '../../../types/errors';
   import type { Extension } from '../../../types/extension';
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
+  import type { ResourceType } from '../../../types/simulation';
   import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import { getConstraintStatus } from '../../../utilities/constraint';
   import effects from '../../../utilities/effects';
@@ -414,7 +415,17 @@
   $: if ($initialPlan && browser) {
     // Asynchronously fetch resource types
     effects.getResourceTypes($initialPlan.model_id, data.user).then(initialResourceTypes => {
-      $resourceTypes = [...initialResourceTypes, ...$externalResources.map(({ name, schema }) => ({ name, schema }))];
+      const uniqueLookup: Set<string> = new Set();
+      $resourceTypes = [...initialResourceTypes, ...$externalResources].reduce(
+        (prevExternalResources: ResourceType[], { name, schema }) => {
+          if (!uniqueLookup.has(name)) {
+            uniqueLookup.add(name);
+            prevExternalResources.push({ name, schema });
+          }
+          return prevExternalResources;
+        },
+        [],
+      );
       $resourceTypesLoading = false;
     });
   }
