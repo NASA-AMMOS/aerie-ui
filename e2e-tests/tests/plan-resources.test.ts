@@ -45,7 +45,8 @@ test.afterAll(async () => {
 test.describe.serial('Plan Resources', () => {
   test('Uploading external plan dataset file - JSON', async () => {
     await plan.uploadExternalDatasets('e2e-tests/data/external-dataset.json');
-    await expect(plan.panelActivityTypes.getByText('/orientation')).toBeVisible();
+    await expect(plan.panelActivityTypes.getByText('/awake')).toBeVisible();
+    await expect(plan.panelActivityTypes.getByText('/batteryEnergy')).toBeVisible();
   });
 
   test('Uploading external plan dataset file - CSV', async () => {
