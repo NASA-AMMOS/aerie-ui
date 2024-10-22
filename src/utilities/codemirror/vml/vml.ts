@@ -4,6 +4,7 @@ import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@co
 import type { SyntaxNode } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
 import { getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
+import { blockMark } from '../themes/block';
 import { parser } from '../vml/vml.grammar';
 import {
   RULE_TIME_TAGGED_STATEMENT,
@@ -25,8 +26,6 @@ import {
   TOKEN_WHILE,
 } from './vmlConstants';
 import { computeBlocks, isBlockCommand, vmlBlockFolder } from './vmlFolder';
-
-const blockMark = Decoration.mark({ class: 'cm-block-match' });
 
 const FoldBehavior: {
   [tokenName: string]: (node: SyntaxNode) => ReturnType<typeof foldInside>;
