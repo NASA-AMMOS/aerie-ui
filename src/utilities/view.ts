@@ -467,11 +467,11 @@ export async function validateViewJSONAgainstSchema(json: any) {
   try {
     const ajv = new Ajv();
     // Ensure json schema is found for the current version
-    const currentSchema = jsonSchema[viewSchemaVersionName];
+    const currentSchema = (jsonSchema as Record<string, any>)[viewSchemaVersionName];
     if (!currentSchema) {
       throw new Error(`Schema not found for version: ${viewSchemaVersionName}`);
     }
-    const validate = ajv.compile(jsonSchema[viewSchemaVersionName]);
+    const validate = ajv.compile(currentSchema);
     const valid = validate(json);
     const errors = valid ? [] : validate.errors;
     return { errors, valid };
