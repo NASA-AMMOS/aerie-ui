@@ -3,7 +3,7 @@
 <script lang="ts">
   import type { SyntaxNode } from '@lezer/common';
   import type { CommandDictionary, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-  import type { CommandInfoMapper } from '../../../utilities/codemirror/command-info-mapper';
+  import type { CommandInfoMapper } from '../../../utilities/codemirror/commandInfoMapper';
   import {
     getMissingArgDefs,
     isFswCommandArgumentBoolean,

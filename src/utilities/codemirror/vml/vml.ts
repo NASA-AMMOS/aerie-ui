@@ -3,7 +3,8 @@ import { LRLanguage, LanguageSupport, foldInside, foldNodeProp, syntaxTree } fro
 import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
-import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
+import { getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
+import { parser } from '../vml/vml.grammar';
 import {
   RULE_TIME_TAGGED_STATEMENT,
   TOKEN_CALL,
@@ -22,9 +23,8 @@ import {
   TOKEN_THEN,
   TOKEN_TO,
   TOKEN_WHILE,
-} from './vml-constants';
-import { computeBlocks, isBlockCommand, vmlBlockFolder } from './vml-folder';
-import { parser } from './vml.grammar';
+} from './vmlConstants';
+import { computeBlocks, isBlockCommand, vmlBlockFolder } from './vmlFolder';
 
 const blockMark = Decoration.mark({ class: 'cm-block-match' });
 

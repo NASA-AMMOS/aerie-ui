@@ -1,6 +1,6 @@
 import type { SyntaxNode } from '@lezer/common';
-import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import type { CommandInfoMapper } from './command-info-mapper';
+import { getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
+import type { CommandInfoMapper } from '../commandInfoMapper';
 import {
   RULE_CALL_PARAMETER,
   RULE_CALL_PARAMETERS,
@@ -13,7 +13,7 @@ import {
   TOKEN_COMMA,
   TOKEN_INT_CONST,
   TOKEN_STRING_CONST,
-} from './vml-constants';
+} from './vmlConstants';
 
 export class VmlCommandInfoMapper implements CommandInfoMapper {
   formatArgumentArray(values: string[], commandNode: SyntaxNode | null): string {

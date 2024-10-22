@@ -17,7 +17,7 @@ import {
   TOKEN_STRING,
 } from '../../constants/seq-n-grammar-constants';
 import { getFromAndTo, getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import type { CommandInfoMapper } from './command-info-mapper';
+import type { CommandInfoMapper } from './commandInfoMapper';
 
 export function getNameNode(stepNode: SyntaxNode | null) {
   if (stepNode) {

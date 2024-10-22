@@ -17,7 +17,7 @@ import {
   TOKEN_INT_CONST,
   TOKEN_STRING_CONST,
   TOKEN_UINT_CONST,
-} from './vml-constants';
+} from './vmlConstants';
 
 /**
  * Limitations

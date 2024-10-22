@@ -25,8 +25,8 @@ import {
   RULE_WHILE,
   TOKEN_ERROR,
   TOKEN_TIME_CONST,
-} from './vml-constants';
-import { computeBlocks } from './vml-folder';
+} from './vmlConstants';
+import { computeBlocks } from './vmlFolder';
 
 type LineOfNodes = (SyntaxNode | undefined)[];
 

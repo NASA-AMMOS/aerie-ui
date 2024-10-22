@@ -8,10 +8,10 @@ import type {
   FswCommandArgumentInteger,
 } from '@nasa-jpl/aerie-ampcs';
 import type { EditorView } from 'codemirror';
-import ArgumentTooltip from '../../components/sequencing/ArgumentTooltip.svelte';
-import CommandTooltip from '../../components/sequencing/CommandTooltip.svelte';
-import { getTokenPositionInLine } from '../sequence-editor/sequence-tooltip';
-import { checkContainment, getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
+import ArgumentTooltip from '../../../components/sequencing/ArgumentTooltip.svelte';
+import CommandTooltip from '../../../components/sequencing/CommandTooltip.svelte';
+import { getTokenPositionInLine } from '../../sequence-editor/sequence-tooltip';
+import { checkContainment, getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
 import {
   RULE_CALL_PARAMETER,
   RULE_CALL_PARAMETERS,
@@ -23,7 +23,7 @@ import {
   RULE_TIME_TAGGED_STATEMENT,
   RULE_VM_MANAGEMENT,
   TOKEN_INT_CONST,
-} from './vml-constants';
+} from './vmlConstants';
 
 const sequenceEngineArgument: FswCommandArgumentInteger = {
   arg_type: 'integer',

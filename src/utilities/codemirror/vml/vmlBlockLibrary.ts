@@ -38,7 +38,7 @@ import {
   TOKEN_TIME,
   TOKEN_UINT,
   TOKEN_UINT_CONST,
-} from './vml-constants';
+} from './vmlConstants';
 
 export function vmlBlockLibraryToCommandDictionary(vml: string, id?: string, path?: string): CommandDictionary {
   const parsed = VmlLanguage.parser.parse(vml);

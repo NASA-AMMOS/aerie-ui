@@ -14,7 +14,7 @@ import type {
 } from '@nasa-jpl/aerie-ampcs';
 import type { EditorView } from 'codemirror';
 import { fswCommandArgDefault } from '../sequence-editor/command-dictionary';
-import type { CommandInfoMapper } from './command-info-mapper';
+import type { CommandInfoMapper } from './commandInfoMapper';
 
 export function isFswCommandArgumentEnum(arg: FswCommandArgument): arg is FswCommandArgumentEnum {
   return arg.arg_type === 'enum';

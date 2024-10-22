@@ -1,9 +1,9 @@
 import { type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import { RULE_FUNCTION_NAME, RULE_ISSUE, RULE_STATEMENT, TOKEN_STRING_CONST } from './vml-constants';
-import { getArgumentPosition } from './vml-tree-utils';
+import { getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
+import { RULE_FUNCTION_NAME, RULE_ISSUE, RULE_STATEMENT, TOKEN_STRING_CONST } from './vmlConstants';
+import { getArgumentPosition } from './vmlTreeUtils';
 
 export function vmlAutoComplete(
   _channelDictionary: ChannelDictionary | null,
