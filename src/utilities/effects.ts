@@ -4687,8 +4687,8 @@ const effects = {
 
           // If migration failed catch the error and return default view
           if (!migratedView) {
-            catchError('Unable to migrate view', error as Error);
-            showFailureToast(`Unable to migrate view: ${view.name}`);
+            catchError('Unable to automatically migrate view', error as Error);
+            showFailureToast(`Unable to automatically migrate view: ${view.name}`);
           } else {
             return migratedView;
           }

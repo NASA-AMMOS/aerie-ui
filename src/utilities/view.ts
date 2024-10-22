@@ -463,7 +463,7 @@ export function createRowSizes({ row1 = '1fr', row2 = '1fr' }: ViewGridRows, col
   return '1fr';
 }
 
-export async function validateViewJSONAgainstSchema(json: any) {
+export function validateViewJSONAgainstSchema(json: any) {
   try {
     const ajv = new Ajv();
     // Ensure json schema is found for the current version
