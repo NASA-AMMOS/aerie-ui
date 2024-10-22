@@ -400,6 +400,7 @@
   .filter-buttons {
     display: flex;
     gap: 4px;
+    position: relative;
   }
 
   .list-items {

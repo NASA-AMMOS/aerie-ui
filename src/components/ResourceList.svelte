@@ -27,7 +27,7 @@
   let uploadFiles: FileList | undefined;
   let uploadFileInput: HTMLInputElement;
 
-  $: resourceDataTypes = $allResourceTypes.map(({ name }) => name);
+  $: resourceDataTypes = [...new Set($allResourceTypes.map(t => t.schema.type))];
   $: if (user !== null && $plan !== null) {
     hasUploadPermission = featurePermissions.externalResources.canCreate(user, $plan);
   }
