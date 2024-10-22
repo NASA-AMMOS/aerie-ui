@@ -567,8 +567,10 @@ function parseAllowableRanges(text: string, rangeNode: any): { max: number; min:
       const rangeMatch = /^([-+]?\d+)?(\.\.\.)([-+]?\d+)?$/.exec(range.replaceAll('"', '').trim());
       if (rangeMatch) {
         const [, min, , max] = rangeMatch;
-        const maxNum = !isNaN(Number(max)) ? Number(max) : Infinity;
-        const minNum = !isNaN(Number(min)) ? Number(min) : -Infinity;
+        const parsedMaxNum = Number(max);
+        const parsedMinNum = Number(min);
+        const maxNum = !Number.isNaN(parsedMaxNum) ? parsedMaxNum : Infinity;
+        const minNum = !Number.isNaN(parsedMinNum) ? parsedMinNum : -Infinity;
 
         return { max: maxNum, min: minNum };
       }

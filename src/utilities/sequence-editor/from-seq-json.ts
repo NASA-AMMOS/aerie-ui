@@ -120,8 +120,8 @@ function seqJsonVariableToSequence(
   sequence += variables
     .map(variable => {
       const name = variable.name;
-      const type = variable.type ? ' ' + variable.type : '';
-      const enumName = variable.enum_name ? ' ' + variable.enum_name : '';
+      const type = variable.type ? ` ${variable.type}` : '';
+      const enumName = variable.enum_name ? ` ${variable.enum_name}` : '';
       const allowableRanges = variable.allowable_ranges
         ? ` "${variable.allowable_ranges.map(range => `${range.min}...${range.max}`).join(',')}"`
         : '';
