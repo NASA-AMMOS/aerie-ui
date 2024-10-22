@@ -6514,7 +6514,7 @@ const effects = {
 
   async validateViewJSON(unValidatedView: unknown): Promise<{ errors?: string[]; valid: boolean }> {
     try {
-      const { errors, valid } = await validateViewJSONAgainstSchema(unValidatedView);
+      const { errors, valid } = validateViewJSONAgainstSchema(unValidatedView);
       return {
         errors:
           errors?.map(error => {

@@ -19,7 +19,7 @@ describe('generateDefaultView', () => {
         { name: 'resource2', schema: { items: { type: 'boolean' }, type: 'series' } },
       ],
     );
-    const { valid, errors } = await validateViewJSONAgainstSchema(view.definition);
+    const { valid, errors } = validateViewJSONAgainstSchema(view.definition);
     expect(errors).to.deep.equal([]);
     expect(valid).toBe(true);
   });
@@ -30,7 +30,7 @@ describe('generateDefaultViewWithEvents', () => {
     const view = generateDefaultView([], [], [{ name: 'external-event-type_1' }, { name: 'external-event-type_2' }]);
 
     // validate against schema
-    const { valid, errors } = await validateViewJSONAgainstSchema(view.definition);
+    const { valid, errors } = validateViewJSONAgainstSchema(view.definition);
     expect(errors).to.deep.equal([]);
     expect(valid).toBe(true);
 

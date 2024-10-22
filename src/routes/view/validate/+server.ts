@@ -5,7 +5,7 @@ import { validateViewJSONAgainstSchema } from '../../../utilities/view';
 export const POST: RequestHandler = async event => {
   try {
     const body = await event.request.json();
-    const { errors, valid } = await validateViewJSONAgainstSchema(body);
+    const { errors, valid } = validateViewJSONAgainstSchema(body);
     if (!valid) {
       return json({ errors, valid });
     } else {
