@@ -268,7 +268,16 @@
     let output = await selectedOutputFormat?.toOutputFormat?.(tree, sequence, commandDictionary, sequenceName);
 
     if ($sequenceAdaptation?.modifyOutput !== undefined && output !== undefined) {
-      output = `${$sequenceAdaptation.modifyOutput(output, parameterDictionaries, channelDictionary)}`;
+      const modifiedOutput = $sequenceAdaptation.modifyOutput(output, parameterDictionaries, channelDictionary);
+      if (modifiedOutput === null) {
+        output = 'modifyOutput returned null. Verify your adaptation is correct';
+      } else if (modifiedOutput === undefined) {
+        output = 'modifyOutput returned undefined. Verify your adaptation is correct';
+      } else if (typeof modifiedOutput === 'object') {
+        output = JSON.stringify(modifiedOutput);
+      } else {
+        output = `${modifiedOutput}`;
+      }
     }
 
     editorOutputView.dispatch({ changes: { from: 0, insert: output, to: editorOutputView.state.doc.length } });
