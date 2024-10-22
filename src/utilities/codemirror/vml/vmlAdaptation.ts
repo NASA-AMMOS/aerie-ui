@@ -1,12 +1,11 @@
 import { type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
-import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
+import type { CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
 import { getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
 import { RULE_FUNCTION_NAME, RULE_ISSUE, RULE_STATEMENT, TOKEN_STRING_CONST } from './vmlConstants';
 import { getArgumentPosition } from './vmlTreeUtils';
 
 export function vmlAutoComplete(
-  _channelDictionary: ChannelDictionary | null,
   commandDictionary: CommandDictionary | null,
 ): (context: CompletionContext) => CompletionResult | null {
   return (context: CompletionContext) => {
@@ -72,12 +71,10 @@ export function vmlAutoComplete(
 }
 
 function getStemAndDefaultArguments(commandDictionary: CommandDictionary, cmd: FswCommand): string {
-  let s = cmd.stem;
   if (cmd.arguments.length) {
-    s += ` ${cmd.arguments.map(argNode => getDefaultArgumentValue(commandDictionary, argNode)).join(',')}`;
+    return `${cmd.stem} ${cmd.arguments.map(argNode => getDefaultArgumentValue(commandDictionary, argNode)).join(',')}`;
   }
-
-  return s;
+  return cmd.stem;
 }
 
 function getDefaultArgumentValue(commandDictionary: CommandDictionary, argDef: FswCommandArgument): string {

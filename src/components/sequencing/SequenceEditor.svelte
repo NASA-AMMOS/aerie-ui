@@ -158,9 +158,7 @@
         getParsedCommandDictionary(unparsedCommandDictionary, user).then(parsedCommandDictionary => {
           commandDictionary = parsedCommandDictionary;
           editorSequenceView.dispatch({
-            effects: compartmentSeqLanguage.reconfigure(
-              setupVmlLanguageSupport(vmlAutoComplete(null, commandDictionary)),
-            ),
+            effects: compartmentSeqLanguage.reconfigure(setupVmlLanguageSupport(vmlAutoComplete(commandDictionary))),
           });
           editorSequenceView.dispatch({
             effects: compartmentSeqLinter.reconfigure(vmlLinter(commandDictionary)),
