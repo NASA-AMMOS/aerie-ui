@@ -14,7 +14,7 @@
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { TOKEN_ERROR } from '../../../constants/seq-n-grammar-constants';
-  import type { CommandInfoMapper } from '../../../utilities/codemirror/command-info-mapper';
+  import type { CommandInfoMapper } from '../../../utilities/codemirror/commandInfoMapper';
   import { getCustomArgDef } from '../../../utilities/sequence-editor/extension-points';
   import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
