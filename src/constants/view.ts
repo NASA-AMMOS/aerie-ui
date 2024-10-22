@@ -71,3 +71,5 @@ export const ViewXRangeLayerSchemePresets: Record<XRangeLayerColorScheme, readon
 };
 
 export const viewSchemaVersion = 1;
+
+export const viewSchemaVersionName = `v${viewSchemaVersion}`;

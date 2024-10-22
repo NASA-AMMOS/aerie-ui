@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
-import { ViewDefaultDiscreteOptions, viewSchemaVersion } from '../constants/view';
+import { ViewDefaultDiscreteOptions, viewSchemaVersion, viewSchemaVersionName } from '../constants/view';
+import jsonSchema from '../schemas';
 import type { ActivityType } from '../types/activity';
 import type { ExternalEventType } from '../types/external-event';
 import type { ResourceType } from '../types/simulation';
@@ -465,9 +466,12 @@ export function createRowSizes({ row1 = '1fr', row2 = '1fr' }: ViewGridRows, col
 export async function validateViewJSONAgainstSchema(json: any) {
   try {
     const ajv = new Ajv();
-    const jsonSchemaPath = `../schemas/ui-view-schema-v${viewSchemaVersion}.json`;
-    const jsonSchema = await import(/* @vite-ignore */ jsonSchemaPath);
-    const validate = ajv.compile(jsonSchema);
+    // Ensure json schema is found for the current version
+    const currentSchema = jsonSchema[viewSchemaVersionName];
+    if (!currentSchema) {
+      throw new Error(`Schema not found for version: ${viewSchemaVersionName}`);
+    }
+    const validate = ajv.compile(jsonSchema[viewSchemaVersionName]);
     const valid = validate(json);
     const errors = valid ? [] : validate.errors;
     return { errors, valid };
