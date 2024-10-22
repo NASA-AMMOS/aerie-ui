@@ -1803,6 +1803,7 @@ const gql = {
             type
           }
         }
+        dataset_id
         offset_from_plan_start
       }
     }

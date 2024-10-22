@@ -1,16 +1,29 @@
 {
   "datasetStart": "2024-245T14:00:00",
   "profileSet": {
-    "/orientation": {
+    "/awake": {
+      "schema": {
+        "type": "string"
+      },
+      "segments": [
+        {
+          "duration": 3000000000,
+          "dynamics": "foo"
+        },
+        {
+          "duration": 3000000000,
+          "dynamics": "bar"
+        }
+      ],
+      "type": "discrete"
+    },
+    "/batteryEnergy": {
       "schema": {
         "items": {
-          "x": {
+          "initial": {
             "type": "real"
           },
-          "y": {
-            "type": "real"
-          },
-          "z": {
+          "rate": {
             "type": "real"
           }
         },
@@ -18,26 +31,21 @@
       },
       "segments": [
         {
-          "duration": 3600000000,
+          "duration": 40000000,
           "dynamics": {
-            "x": 0,
-            "y": 0,
-            "z": 1
+            "initial": 100,
+            "rate": -0.5
           }
         },
         {
-          "duration": 3600000000
-        },
-        {
-          "duration": 3600000000,
+          "duration": 30000000,
           "dynamics": {
-            "x": 1,
-            "y": 1,
-            "z": 0
+            "initial": 35,
+            "rate": -0.1
           }
         }
       ],
-      "type": "discrete"
+      "type": "real"
     }
   }
 }

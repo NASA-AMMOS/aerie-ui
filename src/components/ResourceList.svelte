@@ -4,7 +4,7 @@
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import UploadIcon from '@nasa-jpl/stellar/icons/upload.svg?component';
   import { plan } from '../stores/plan';
-  import { resourceTypes, simulationDatasetId } from '../stores/simulation';
+  import { allResourceTypes, simulationDatasetId } from '../stores/simulation';
   import type { User } from '../types/app';
   import type { ResourceType } from '../types/simulation';
   import type { TimelineItemType } from '../types/timeline';
@@ -27,7 +27,7 @@
   let uploadFiles: FileList | undefined;
   let uploadFileInput: HTMLInputElement;
 
-  $: resourceDataTypes = [...new Set($resourceTypes.map(t => t.schema.type))];
+  $: resourceDataTypes = $allResourceTypes.map(({ name }) => name);
   $: if (user !== null && $plan !== null) {
     hasUploadPermission = featurePermissions.externalResources.canCreate(user, $plan);
   }
@@ -61,7 +61,7 @@
 </script>
 
 <TimelineItemList
-  items={$resourceTypes}
+  items={$allResourceTypes}
   chartType="line"
   typeName="resource"
   typeNamePlural="Resources"
