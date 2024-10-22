@@ -320,7 +320,7 @@ function validateVariables(inputParams: SyntaxNode[], text: string, type: 'INPUT
       inputParam =>
         ({
           ...getFromAndTo([inputParam]),
-          message: `There is a maximum of ${type} directive per sequence`,
+          message: `There is a maximum of one ${type} directive per sequence`,
           severity: 'error',
         }) as const,
     ),
@@ -345,32 +345,40 @@ function validateVariables(inputParams: SyntaxNode[], text: string, type: 'INPUT
 
     if (type) {
       if (['FLOAT', 'INT', 'STRING', 'UINT', 'ENUM'].includes(type) === false) {
+        const node = typeNode ?? objectNode ?? parameter;
+        const { from, to } = node;
         diagnostics.push({
-          from: typeNode?.from ?? objectNode?.from ?? parameter.from,
+          from,
           message: 'Invalid type. Must be FLOAT, INT, STRING, UINT, or ENUM.',
           severity: 'error',
-          to: typeNode?.to ?? objectNode?.to ?? parameter.to,
+          to,
         });
       } else if (type.toLocaleLowerCase() === 'enum' && !enumName) {
+        const node = typeNode ?? objectNode ?? parameter;
+        const { from, to } = node;
         diagnostics.push({
-          from: typeNode?.from ?? objectNode?.from ?? parameter.from,
+          from,
           message: '"enum_name" is required for ENUM type.',
           severity: 'error',
-          to: typeNode?.to ?? objectNode?.to ?? parameter.to,
+          to,
         });
       } else if (type.toLocaleLowerCase() !== 'enum' && enumName) {
+        const node = enumNode ?? objectNode ?? parameter;
+        const { from, to } = node;
         diagnostics.push({
-          from: enumNode?.from ?? objectNode?.from ?? parameter.from,
+          from,
           message: '"enum_name" is only required for ENUM type.',
           severity: 'error',
-          to: enumNode?.to ?? objectNode?.to ?? parameter.to,
+          to,
         });
       } else if (type.toLocaleLowerCase() === 'string' && range) {
+        const node = rangeNode ?? objectNode ?? parameter;
+        const { from, to } = node;
         diagnostics.push({
-          from: rangeNode?.from ?? objectNode?.from ?? parameter.from,
+          from,
           message: '"allowable_ranges" is not required for STRING type',
           severity: 'error',
-          to: rangeNode?.to ?? objectNode?.to ?? parameter.to,
+          to,
         });
       }
     }
@@ -401,12 +409,12 @@ function getVariableInfo(
 } {
   const nameNode = parameter.getChild('Enum');
   const typeNode = parameter.getChild('Type');
-  const enumNode = parameter.getChild('EnumName');
-  const rangeNode = parameter.getChild('Range');
-  const valuesNode = parameter.getChild('Values');
   const objectNode = parameter.getChild('Object');
 
   if (typeNode) {
+    const enumNode = parameter.getChild('EnumName');
+    const rangeNode = parameter.getChild('Range');
+    const valuesNode = parameter.getChild('Values');
     return {
       enumName: enumNode ? text.slice(enumNode.from, enumNode.to) : undefined,
       name: nameNode ? text.slice(nameNode.from, nameNode.to) : undefined,

@@ -34,7 +34,7 @@ VARIABLE INT "MIN...MAX | ...MAX | MIN..." "VALUE_1, VALUE_2, ..."
 const LOCALS = [
   `@LOCALS_BEGIN
 VARIABLE INT 
-TEST FLOAT ENUM
+TEST FLOAT
 @LOCALS_END`,
 ];
 
@@ -363,8 +363,8 @@ describe('foldRequest', () => {
 
 describe('foldVariables', () => {
   test('Parameters should return the correct from and to', () => {
-    PARAMETERS.forEach(parameter => {
-      const doc = `${parameter}`;
+    PARAMETERS.forEach((parameter: string) => {
+      const doc = parameter;
       const tree = parser.parse(doc);
       const state = EditorState.create({ doc });
 
@@ -380,9 +380,9 @@ describe('foldVariables', () => {
       }
     });
   });
-  test('Parameters should return the correct from and to', () => {
-    LOCALS.forEach(local => {
-      const doc = `${local}`;
+  test('Locals should return the correct from and to', () => {
+    LOCALS.forEach((local: string) => {
+      const doc = local;
       const tree = parser.parse(doc);
       const state = EditorState.create({ doc });
 
