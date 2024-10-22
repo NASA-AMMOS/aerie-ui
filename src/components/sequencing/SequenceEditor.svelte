@@ -240,7 +240,7 @@
         EditorView.updateListener.of(selectedCommandUpdateListener),
         blockTheme,
         compartmentSeqHighlighter.of([
-          EditorView.updateListener.of(debounce(seqNHighlightBlock, 250)),
+          EditorView.updateListener.of(debouncedSeqNHighlightBlock),
           seqqNBlockHighlighter,
         ]),
         ...($sequenceAdaptation.autoIndent
