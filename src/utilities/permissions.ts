@@ -492,8 +492,8 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     const queries = [Queries.DELETE_ACTIVITY_DELETE_SUBTREE_BULK];
     return isUserAdmin(user) || (getPermission(queries, user) && getRolePlanPermission(queries, user, plan, model));
   },
-  DELETE_ACTIVITY_DIRECTIVE_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_ACTIVITY_DIRECTIVE_TAGS], user);
+  DELETE_ACTIVITY_DIRECTIVE_TAG: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_ACTIVITY_DIRECTIVE_TAG], user);
   },
   DELETE_ACTIVITY_PRESET: (user: User | null, preset: AssetWithOwner<ActivityPreset>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.DELETE_ACTIVITY_PRESET], user) && isUserOwner(user, preset));

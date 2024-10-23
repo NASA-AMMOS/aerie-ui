@@ -1960,29 +1960,31 @@ const effects = {
     return false;
   },
 
-  async deleteActivityDirectiveTags(ids: Tag['id'][], user: User | null): Promise<number | null> {
+  async deleteActivityDirectiveTag(
+    tagId: Tag['id'],
+    directiveId: ActivityDirectiveId,
+    planId: number,
+    user: User | null,
+  ): Promise<number | null> {
     try {
-      if (!queryPermissions.DELETE_ACTIVITY_DIRECTIVE_TAGS(user)) {
+      if (!queryPermissions.DELETE_ACTIVITY_DIRECTIVE_TAG(user)) {
         throwPermissionError('delete activity directive tags');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_ACTIVITY_DIRECTIVE_TAGS, { ids }, user);
-      const { delete_activity_directive_tags } = data;
-      if (delete_activity_directive_tags != null) {
-        const { affected_rows } = delete_activity_directive_tags;
-
-        if (affected_rows !== ids.length) {
-          throw Error('Some activity directive tags were not successfully deleted');
-        }
-
+      const data = await reqHasura<{ tag_id: number }>(
+        gql.DELETE_ACTIVITY_DIRECTIVE_TAG,
+        { directive_id: directiveId, plan_id: planId, tag_id: tagId },
+        user,
+      );
+      if (data.delete_activity_directive_tags_by_pk != null) {
         showSuccessToast('Activity Directive Updated Successfully');
-        return affected_rows;
+        return data.delete_activity_directive_tags_by_pk.tag_id;
       } else {
-        throw Error('Unable to delete activity directive tags');
+        throw Error('Unable to delete activity directive tag');
       }
     } catch (e) {
-      catchError('Delete Activity Directive Tags Failed', e as Error);
-      showFailureToast('Delete Activity Directive Tags Failed');
+      catchError('Delete Activity Directive Tag Failed', e as Error);
+      showFailureToast('Delete Activity Directive Tag Failed');
       return null;
     }
   },

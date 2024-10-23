@@ -25,7 +25,7 @@ export enum Queries {
   CREATE_SNAPSHOT = 'create_snapshot',
   DELETE_ACTIVITY_DELETE_SUBTREE_BULK = 'delete_activity_by_pk_delete_subtree_bulk',
   DELETE_ACTIVITY_DIRECTIVES = 'delete_activity_directive',
-  DELETE_ACTIVITY_DIRECTIVE_TAGS = 'delete_activity_directive_tags',
+  DELETE_ACTIVITY_DIRECTIVE_TAG = 'delete_activity_directive_tags_by_pk', // pluralization is a typo in the db
   DELETE_ACTIVITY_PRESET = 'delete_activity_presets_by_pk',
   DELETE_ACTIVITY_REANCHOR_PLAN_START_BULK = 'delete_activity_by_pk_reanchor_plan_start_bulk',
   DELETE_ACTIVITY_REANCHOR_TO_ANCHOR_BULK = 'delete_activity_by_pk_reanchor_to_anchor_bulk',
@@ -865,10 +865,10 @@ const gql = {
     }
   `,
 
-  DELETE_ACTIVITY_DIRECTIVE_TAGS: `#graphql
-    mutation DeleteActivityDirectivesTags($ids: [Int!]!) {
-        ${Queries.DELETE_ACTIVITY_DIRECTIVE_TAGS}(where: { tag_id: { _in: $ids } }) {
-          affected_rows
+  DELETE_ACTIVITY_DIRECTIVE_TAG: `#graphql
+    mutation DeleteActivityDirectivesTag($tag_id: Int!, $directive_id: Int!, $plan_id: Int!) {
+        ${Queries.DELETE_ACTIVITY_DIRECTIVE_TAG}(directive_id: $directive_id, plan_id: $plan_id, tag_id: $tag_id) {
+          tag_id
       }
     }
   `,

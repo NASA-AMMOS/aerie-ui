@@ -19,7 +19,7 @@ export const mockUser: User = {
     delete_activity_by_pk_reanchor_plan_start_bulk: true,
     delete_activity_by_pk_reanchor_to_anchor_bulk: true,
     delete_activity_directive: true,
-    delete_activity_directive_tags: true,
+    delete_activity_directive_tag: true,
     delete_activity_presets_by_pk: true,
     delete_command_dictionary_by_pk: true,
     delete_constraint_by_pk: true,
