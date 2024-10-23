@@ -3671,7 +3671,7 @@ const gql = {
       }) {
         affected_rows
       }
-      deleteSchedulingConditionTags: ${Queries.DELETE_SCHEDULING_CONDITION_METADATA_TAGS}(where: { tag_id: { _in: $tagIdsToDelete } }) {
+      deleteSchedulingConditionTags: ${Queries.DELETE_SCHEDULING_CONDITION_METADATA_TAGS}(where: { tag_id: { _in: $tagIdsToDelete }, condition_id: { _eq: $id } }) {
           affected_rows
       }
     }
