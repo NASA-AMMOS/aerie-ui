@@ -1,5 +1,5 @@
 import type { SyntaxNode } from '@lezer/common';
-import { getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
+import { getChildrenNode, getNearestAncestorNodeOfType } from '../../sequence-editor/tree-utils';
 import type { CommandInfoMapper } from '../commandInfoMapper';
 import {
   RULE_CALL_PARAMETER,
@@ -21,19 +21,13 @@ export class VmlCommandInfoMapper implements CommandInfoMapper {
     if (commandNode?.name === RULE_TIME_TAGGED_STATEMENT) {
       const callParametersNode = commandNode.firstChild?.nextSibling?.firstChild?.getChild(RULE_CALL_PARAMETERS);
       if (callParametersNode) {
-        let hasTrailingComma = false;
-        let child = callParametersNode.firstChild;
-        while (child) {
-          if (child.name === RULE_CALL_PARAMETER) {
-            hasTrailingComma = false;
-          } else if (child.name === TOKEN_COMMA) {
-            hasTrailingComma = true;
-          }
-          child = child.nextSibling;
-        }
         const hasParametersSpecified = !!callParametersNode.getChild(RULE_CALL_PARAMETER);
-        if (!hasTrailingComma && hasParametersSpecified) {
-          prefix = ',';
+        if (hasParametersSpecified) {
+          const children = getChildrenNode(callParametersNode);
+          const hasTrailingComma =
+            children.findLastIndex(node => node.name === TOKEN_COMMA) >
+            children.findLastIndex(node => node.name === RULE_CALL_PARAMETER);
+          prefix = hasTrailingComma ? '' : ',';
         }
       }
     }
