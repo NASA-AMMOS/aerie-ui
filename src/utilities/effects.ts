@@ -1430,7 +1430,7 @@ const effects = {
   ): Promise<number | null> {
     try {
       if (!queryPermissions.CREATE_PLAN_SNAPSHOT_TAGS(user)) {
-        throwPermissionError('create plan tags');
+        throwPermissionError('create plan snapshot tags');
       }
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_PLAN_SNAPSHOT_TAGS, { tags }, user);
@@ -2871,27 +2871,22 @@ const effects = {
     }
   },
 
-  async deletePlanTags(ids: Tag['id'][], user: User | null): Promise<number | null> {
+  async deletePlanTag(tagId: Tag['id'], planId: number, user: User | null): Promise<number | null> {
     try {
-      if (!queryPermissions.DELETE_PLAN_TAGS(user)) {
-        throwPermissionError('delete plan tags');
+      if (!queryPermissions.DELETE_PLAN_TAG(user)) {
+        throwPermissionError('delete plan tag');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_PLAN_TAGS, { ids }, user);
-      const { delete_plan_tags } = data;
-      if (delete_plan_tags != null) {
-        const { affected_rows } = delete_plan_tags;
-        if (affected_rows !== ids.length) {
-          throw Error('Some plan tags were not successfully deleted');
-        }
+      const data = await reqHasura<{ tag_id: number }>(gql.DELETE_PLAN_TAG, { plan_id: planId, tag_id: tagId }, user);
+      if (data.delete_plan_tags_by_pk != null) {
         showSuccessToast('Plan Updated Successfully');
-        return affected_rows;
+        return data.delete_plan_tags_by_pk.tag_id;
       } else {
-        throw Error('Unable to delete plan tags');
+        throw Error('Unable to delete plan tag');
       }
     } catch (e) {
-      catchError('Delete Plan Tags Failed', e as Error);
-      showFailureToast('Delete Plan Tags Failed');
+      catchError('Delete Plan Tag Failed', e as Error);
+      showFailureToast('Delete Plan Tag Failed');
       return null;
     }
   },

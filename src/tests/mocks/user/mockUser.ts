@@ -29,7 +29,7 @@ export const mockUser: User = {
     delete_expansion_set_by_pk: true,
     delete_mission_model_by_pk: true,
     delete_plan_by_pk: true,
-    delete_plan_tags: true,
+    delete_plan_tag: true,
     delete_preset_to_directive_by_pk: true,
     delete_scheduling_condition_by_pk: true,
     delete_scheduling_goal_by_pk: true,

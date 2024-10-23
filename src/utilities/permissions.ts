@@ -598,8 +598,8 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.DELETE_PLAN_SNAPSHOT], user) && isUserAdmin(user);
   },
-  DELETE_PLAN_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_PLAN_TAGS], user);
+  DELETE_PLAN_TAG: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_PLAN_TAG], user);
   },
   DELETE_PRESET_TO_DIRECTIVE: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
