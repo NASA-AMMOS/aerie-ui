@@ -2422,13 +2422,17 @@ const effects = {
     return false;
   },
 
-  async deleteExpansionRuleTags(ids: Tag['id'][], user: User | null): Promise<number | null> {
+  async deleteExpansionRuleTags(tagIds: Tag['id'][], ruleId: number, user: User | null): Promise<number | null> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_RULE_TAGS(user)) {
         throwPermissionError('delete expansion rule tags');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_EXPANSION_RULE_TAGS, { ids }, user);
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.DELETE_EXPANSION_RULE_TAGS,
+        { rule_id: ruleId, tag_ids: tagIds },
+        user,
+      );
       const { delete_expansion_rule_tags } = data;
       if (delete_expansion_rule_tags != null) {
         const { affected_rows } = delete_expansion_rule_tags;

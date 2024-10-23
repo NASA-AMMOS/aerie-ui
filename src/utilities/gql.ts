@@ -959,8 +959,8 @@ const gql = {
   `,
 
   DELETE_EXPANSION_RULE_TAGS: `#graphql
-    mutation DeleteExpansionRuleTags($ids: [Int!]!) {
-        ${Queries.DELETE_EXPANSION_RULE_TAGS}(where: { tag_id: { _in: $ids } }) {
+    mutation DeleteExpansionRuleTags($tag_ids: [Int!]!, $rule_id: Int!) {
+        ${Queries.DELETE_EXPANSION_RULE_TAGS}(where: { tag_id: { _in: $tag_ids }, rule_id: { _eq: $rule_id } }) {
           affected_rows
       }
     }
