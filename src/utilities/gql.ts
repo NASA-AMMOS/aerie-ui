@@ -3780,7 +3780,7 @@ const gql = {
       }) {
         affected_rows
       }
-      deleteSchedulingGoalTags: ${Queries.DELETE_SCHEDULING_GOAL_METADATA_TAGS}(where: { tag_id: { _in: $tagIdsToDelete } }) {
+      deleteSchedulingGoalTags: ${Queries.DELETE_SCHEDULING_GOAL_METADATA_TAGS}(where: { tag_id: { _in: $tagIdsToDelete }, goal_id: { _eq: $id } } ) {
           affected_rows
       }
     }
