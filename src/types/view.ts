@@ -37,6 +37,9 @@ export type ViewGridComponent =
   | 'TimelineItemsPanel'
   | 'ConstraintsPanel'
   | 'ExpansionPanel'
+  | 'ExternalSourcesPanel'
+  | 'ExternalEventFormPanel'
+  | 'ExternalEventsTablePanel'
   | 'IFramePanel'
   | 'PlanMetadataPanel'
   | 'SchedulingConditionsPanel'
@@ -84,6 +87,7 @@ export type ViewDefinition = {
     simulationEventsTable: ViewTable;
     timelines: Timeline[];
   };
+  version: number;
 };
 
 export type View = {

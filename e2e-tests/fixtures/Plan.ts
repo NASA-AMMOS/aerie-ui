@@ -18,6 +18,7 @@ export class Plan {
   constraintManageButton: Locator;
   constraintModalFilter: Locator;
   constraintNewButton: Locator;
+  externalSourceManageButton: Locator;
   gridMenu: Locator;
   gridMenuButton: Locator;
   gridMenuItem: (name: string) => Locator;
@@ -93,6 +94,7 @@ export class Plan {
   }
 
   async addActivity(name: string = 'GrowBanana') {
+    await this.showPanel(PanelNames.TIMELINE_ITEMS);
     const currentNumOfActivitiesWithName = await this.panelActivityDirectivesTable.getByRole('row', { name }).count();
     const activityListItem = this.page.locator(`.list-item :text-is("${name}")`);
     const activityRow = this.page
@@ -250,6 +252,13 @@ export class Plan {
     await this.panelActivityForm.getByPlaceholder('Enter preset name').click();
     await this.panelActivityForm.getByPlaceholder('Enter preset name').fill(presetName);
     await this.panelActivityForm.getByPlaceholder('Enter preset name').blur();
+  }
+
+  async fillExternalDatasetFileInput(importFilePath: string) {
+    const inputFile = this.page.locator('input[name="file"]');
+    await inputFile.focus();
+    await inputFile.setInputFiles(importFilePath);
+    await inputFile.evaluate(e => e.blur());
   }
 
   async fillPlanName(name: string) {
@@ -496,6 +505,7 @@ export class Plan {
     this.constraintModalFilter = page.locator('.modal').getByPlaceholder('Filter constraints');
     this.constraintNewButton = page.locator(`button[name="new-constraint"]`);
     this.consoleContainer = page.locator(`.console-container`);
+    this.externalSourceManageButton = page.getByLabel('Select derivation groups to');
     this.gridMenuButton = page.locator('.header > .grid-menu');
     this.gridMenu = this.gridMenuButton.getByRole('menu');
     this.gridMenuItem = (name: string) => this.gridMenu.getByRole('menuitem', { exact: true, name });
@@ -552,6 +562,14 @@ export class Plan {
     this.schedulingSatisfiedActivity = page.locator('.scheduling-goal-analysis-activities-list > .satisfied-activity');
   }
 
+  async uploadExternalDatasets(importFilePath: string) {
+    await this.panelActivityTypes.getByRole('button', { exact: true, name: 'Resources' }).click();
+    await this.panelActivityTypes.getByRole('button', { exact: true, name: 'Upload Resources' }).click();
+    await this.fillExternalDatasetFileInput(importFilePath);
+    await expect(this.panelActivityTypes.getByRole('button', { exact: true, name: 'Upload' })).toBeEnabled();
+    await this.panelActivityTypes.getByRole('button', { exact: true, name: 'Upload' }).click();
+  }
+
   async waitForActivityCheckingStatus(status: Status) {
     await expect(this.page.locator(this.activityCheckingStatusSelector(status))).toBeAttached({ timeout: 10000 });
     await expect(this.page.locator(this.activityCheckingStatusSelector(status))).toBeVisible();
@@ -579,7 +597,7 @@ export class Plan {
 export enum PanelNames {
   ACTIVITY_DIRECTIVES_TABLE = 'Activity Directives Table',
   SIMULATED_ACTIVITIES_TABLE = 'Simulated Activities Table',
-  TIMELINE_ITEMS = 'Activity & Resource Types',
+  TIMELINE_ITEMS = 'Activity, Resource, Event Types',
   CONSTRAINTS = 'Constraints',
   EXPANSION = 'Expansion',
   EXTERNAL_APPLICATION = 'External Application',
@@ -589,4 +607,5 @@ export enum PanelNames {
   SELECTED_ACTIVITY = 'Selected Activity',
   SIMULATION = 'Simulation',
   TIMELINE_EDITOR = 'Timeline Editor',
+  EXTERNAL_SOURCES = 'External Sources',
 }
