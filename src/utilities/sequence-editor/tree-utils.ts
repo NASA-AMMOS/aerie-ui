@@ -1,4 +1,4 @@
-import type { SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, TreeCursor } from '@lezer/common';
 
 export function numberOfChildren(node: SyntaxNode): number {
   let count = 0;
@@ -75,4 +75,17 @@ export function checkContainment(node: SyntaxNode, typesOfAncestorsAndSelf: (str
   }
 
   return false;
+}
+
+export function* filterNodes(cursor: TreeCursor, filter?: (name: SyntaxNode) => boolean): Generator<SyntaxNode> {
+  do {
+    const { node } = cursor;
+    if (!filter || filter(node)) {
+      yield node;
+    }
+  } while (cursor.next());
+}
+
+export function nodeContents(input: string, node: SyntaxNode): string {
+  return input.substring(node.from, node.to);
 }
