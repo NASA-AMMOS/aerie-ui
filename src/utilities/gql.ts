@@ -3498,7 +3498,7 @@ const gql = {
       }) {
         affected_rows
       }
-      deleteConstraintTags: ${Queries.DELETE_CONSTRAINT_TAGS}(where: { tag_id: { _in: $tagIdsToDelete } }) {
+      deleteConstraintTags: ${Queries.DELETE_CONSTRAINT_TAGS}(where: { tag_id: { _in: $tagIdsToDelete }, constraint_id: { _eq: $id } }) {
           affected_rows
       }
     }
