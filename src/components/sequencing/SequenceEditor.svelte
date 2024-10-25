@@ -100,6 +100,8 @@
   let commandInfoMapper: CommandInfoMapper = new SeqNCommandInfoMapper();
   let selectedOutputFormat: IOutputFormat | undefined;
   let toggleSeqJsonPreview: boolean = false;
+  let showOutputs: boolean = true;
+  let editorHeights: string = toggleSeqJsonPreview ? '1fr 3px 1fr' : '1.88fr 3px 80px';
 
   $: {
     loadSequenceAdaptation(parcel?.sequence_adaptation_id);
@@ -213,6 +215,15 @@
           });
         });
       }
+    }
+  }
+
+  $: showOutputs = !inVmlMode() && !!outputFormats.length;
+  $: {
+    if (showOutputs) {
+      editorHeights = toggleSeqJsonPreview ? '1fr 3px 1fr' : '1.88fr 3px 80px';
+    } else {
+      editorHeights = toggleSeqJsonPreview ? '1fr 3px' : '1.88fr 3px';
     }
   }
 
@@ -409,7 +420,7 @@
 </script>
 
 <CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
-  <CssGrid rows={toggleSeqJsonPreview ? '1fr 3px 1fr' : '1.88fr 3px 80px'} minHeight={'0'}>
+  <CssGrid rows={editorHeights} minHeight={'0'}>
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle>{title}</SectionTitle>
@@ -424,59 +435,61 @@
           </button>
 
           <button
-            use:tooltip={{ content: `Copy sequence contents as ${$inputFormat?.name} to clipboard`, placement: 'top' }}
+            use:tooltip={{ content: `Copy sequence contents`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
             on:click={copyInputFormatToClipboard}
-            disabled={disableCopyAndExport}><ClipboardIcon /> {$inputFormat?.name}</button
+            disabled={disableCopyAndExport}><ClipboardIcon />Copy</button
           >
           <button
             use:tooltip={{
-              content: `Download sequence contents as ${$inputFormat?.name}`,
+              content: `Download sequence contents`,
               placement: 'top',
             }}
             class="st-button icon-button secondary ellipsis"
             on:click|stopPropagation={downloadInputFormat}
-            disabled={disableCopyAndExport}><DownloadIcon /> {$inputFormat?.name}</button
+            disabled={disableCopyAndExport}><DownloadIcon />Download</button
           >
 
-          <div class="app-menu" role="none" on:click|stopPropagation={() => menu.toggle()}>
-            <button class="st-button icon-button secondary ellipsis">
-              Output
+          {#if showOutputs}
+            <div class="app-menu" role="none" on:click|stopPropagation={() => menu.toggle()}>
+              <button class="st-button icon-button secondary ellipsis">
+                Output
 
-              <ChevronDownIcon />
-            </button>
+                <ChevronDownIcon />
+              </button>
 
-            <Menu bind:this={menu}>
-              {#each outputFormats as outputFormatItem}
-                <div
-                  use:tooltip={{
-                    content: `Copy sequence contents as ${outputFormatItem?.name} to clipboard`,
-                    placement: 'top',
-                  }}
-                >
-                  <MenuItem on:click={copyOutputFormatToClipboard} disabled={disableCopyAndExport}>
-                    <ClipboardIcon />
-                    {outputFormatItem?.name}
-                  </MenuItem>
-                </div>
+              <Menu bind:this={menu}>
+                {#each outputFormats as outputFormatItem}
+                  <div
+                    use:tooltip={{
+                      content: `Copy sequence contents as ${outputFormatItem?.name} to clipboard`,
+                      placement: 'top',
+                    }}
+                  >
+                    <MenuItem on:click={copyOutputFormatToClipboard} disabled={disableCopyAndExport}>
+                      <ClipboardIcon />
+                      {outputFormatItem?.name}
+                    </MenuItem>
+                  </div>
 
-                <div
-                  use:tooltip={{
-                    content: `Download sequence contents as ${outputFormatItem?.name}`,
-                    placement: 'top',
-                  }}
-                >
-                  <MenuItem on:click={() => downloadOutputFormat(outputFormatItem)} disabled={disableCopyAndExport}>
-                    <DownloadIcon />
-                    {outputFormatItem?.name}
-                  </MenuItem>
-                </div>
-              {/each}
-            </Menu>
-          </div>
+                  <div
+                    use:tooltip={{
+                      content: `Download sequence contents as ${outputFormatItem?.name}`,
+                      placement: 'top',
+                    }}
+                  >
+                    <MenuItem on:click={() => downloadOutputFormat(outputFormatItem)} disabled={disableCopyAndExport}>
+                      <DownloadIcon />
+                      {outputFormatItem?.name}
+                    </MenuItem>
+                  </div>
+                {/each}
+              </Menu>
+            </div>
 
-          {#if selectedOutputFormat?.compile}
-            <button class="st-button icon-button secondary ellipsis" on:click={compile}>Compile</button>
+            {#if selectedOutputFormat?.compile}
+              <button class="st-button icon-button secondary ellipsis" on:click={compile}>Compile</button>
+            {/if}
           {/if}
         </div>
       </svelte:fragment>
@@ -486,43 +499,45 @@
       </svelte:fragment>
     </Panel>
 
-    <CssGridGutter draggable={toggleSeqJsonPreview} track={1} type="row" />
-    <Panel>
-      <svelte:fragment slot="header">
-        <SectionTitle>{selectedOutputFormat?.name} (Read-only)</SectionTitle>
+    {#if showOutputs}
+      <CssGridGutter draggable={toggleSeqJsonPreview} track={1} type="row" />
+      <Panel>
+        <svelte:fragment slot="header">
+          <SectionTitle>{selectedOutputFormat?.name} (Read-only)</SectionTitle>
 
-        <div class="right">
-          {#if outputFormats}
-            <div class="output-format">
-              <label for="outputFormat">Output Format</label>
-              <select bind:value={selectedOutputFormat} class="st-select w-100" name="outputFormat">
-                {#each outputFormats as outputFormatItem}
-                  <option value={outputFormatItem}>
-                    {outputFormatItem.name}
-                  </option>
-                {/each}
-              </select>
-            </div>
-          {/if}
+          <div class="right">
+            {#if outputFormats}
+              <div class="output-format">
+                <label for="outputFormat">Output Format</label>
+                <select bind:value={selectedOutputFormat} class="st-select w-100" name="outputFormat">
+                  {#each outputFormats as outputFormatItem}
+                    <option value={outputFormatItem}>
+                      {outputFormatItem.name}
+                    </option>
+                  {/each}
+                </select>
+              </div>
+            {/if}
 
-          <button
-            use:tooltip={{ content: toggleSeqJsonPreview ? `Collapse Editor` : `Expand Editor`, placement: 'top' }}
-            class="st-button icon"
-            on:click={toggleSeqJsonEditor}
-          >
-            {#if toggleSeqJsonPreview}
-              <CollapseIcon />
-            {:else}
-              <ExpandIcon />
-            {/if}</button
-          >
-        </div>
-      </svelte:fragment>
+            <button
+              use:tooltip={{ content: toggleSeqJsonPreview ? `Collapse Editor` : `Expand Editor`, placement: 'top' }}
+              class="st-button icon"
+              on:click={toggleSeqJsonEditor}
+            >
+              {#if toggleSeqJsonPreview}
+                <CollapseIcon />
+              {:else}
+                <ExpandIcon />
+              {/if}</button
+            >
+          </div>
+        </svelte:fragment>
 
-      <svelte:fragment slot="body">
-        <div bind:this={editorOutputDiv} />
-      </svelte:fragment>
-    </Panel>
+        <svelte:fragment slot="body">
+          <div bind:this={editorOutputDiv} />
+        </svelte:fragment>
+      </Panel>
+    {/if}
   </CssGrid>
 
   <CssGridGutter track={1} type="column" />
