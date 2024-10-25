@@ -4980,12 +4980,12 @@ const effects = {
 
   async planMergeBegin(
     merge_request_id: number,
-    sourcePlan: PlanForMerging,
+    sourcePlan: PlanForMerging | undefined,
     targetPlan: PlanForMerging,
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.PLAN_MERGE_BEGIN(user, sourcePlan, targetPlan, sourcePlan.model)) {
+      if (!queryPermissions.PLAN_MERGE_BEGIN(user, sourcePlan, targetPlan, targetPlan.model)) {
         throwPermissionError('begin a merge');
       }
 
@@ -5004,12 +5004,12 @@ const effects = {
 
   async planMergeCancel(
     merge_request_id: number,
-    sourcePlan: PlanForMerging,
+    sourcePlan: PlanForMerging | undefined,
     targetPlan: PlanForMerging,
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.PLAN_MERGE_CANCEL(user, sourcePlan, targetPlan, sourcePlan.model)) {
+      if (!queryPermissions.PLAN_MERGE_CANCEL(user, sourcePlan, targetPlan, targetPlan.model)) {
         throwPermissionError('cancel this merge request');
       }
 
@@ -5029,12 +5029,12 @@ const effects = {
 
   async planMergeCommit(
     merge_request_id: number,
-    sourcePlan: PlanForMerging,
+    sourcePlan: PlanForMerging | undefined,
     targetPlan: PlanForMerging,
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.PLAN_MERGE_COMMIT(user, sourcePlan, targetPlan, sourcePlan.model)) {
+      if (!queryPermissions.PLAN_MERGE_COMMIT(user, sourcePlan, targetPlan, targetPlan.model)) {
         throwPermissionError('approve this merge request');
       }
 
@@ -5054,12 +5054,12 @@ const effects = {
 
   async planMergeDeny(
     merge_request_id: number,
-    sourcePlan: PlanForMerging,
+    sourcePlan: PlanForMerging | undefined,
     targetPlan: PlanForMerging,
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.PLAN_MERGE_DENY(user, sourcePlan, targetPlan, sourcePlan.model)) {
+      if (!queryPermissions.PLAN_MERGE_DENY(user, sourcePlan, targetPlan, targetPlan.model)) {
         throwPermissionError('deny this merge request');
       }
 
@@ -5080,7 +5080,7 @@ const effects = {
   async planMergeRequestWithdraw(
     merge_request_id: number,
     sourcePlan: PlanForMerging,
-    targetPlan: PlanForMerging,
+    targetPlan: PlanForMerging | undefined,
     user: User | null,
   ): Promise<boolean> {
     try {
@@ -5109,12 +5109,12 @@ const effects = {
   async planMergeResolveAllConflicts(
     merge_request_id: number,
     resolution: PlanMergeResolution,
-    sourcePlan: PlanForMerging,
+    sourcePlan: PlanForMerging | undefined,
     targetPlan: PlanForMerging,
     user: User | null,
   ): Promise<void> {
     try {
-      if (!queryPermissions.PLAN_MERGE_RESOLVE_ALL_CONFLICTS(user, sourcePlan, targetPlan, sourcePlan.model)) {
+      if (!queryPermissions.PLAN_MERGE_RESOLVE_ALL_CONFLICTS(user, sourcePlan, targetPlan, targetPlan.model)) {
         throwPermissionError('resolve merge request conflicts');
       }
 
@@ -5132,12 +5132,12 @@ const effects = {
     merge_request_id: number,
     activity_id: ActivityDirectiveId,
     resolution: PlanMergeResolution,
-    sourcePlan: PlanForMerging,
+    sourcePlan: PlanForMerging | undefined,
     targetPlan: PlanForMerging,
     user: User | null,
   ): Promise<void> {
     try {
-      if (!queryPermissions.PLAN_MERGE_RESOLVE_CONFLICT(user, sourcePlan, targetPlan, sourcePlan.model)) {
+      if (!queryPermissions.PLAN_MERGE_RESOLVE_CONFLICT(user, sourcePlan, targetPlan, targetPlan.model)) {
         throwPermissionError('resolve merge request conflicts');
       }
 
