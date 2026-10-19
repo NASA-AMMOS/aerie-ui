@@ -1,4 +1,6 @@
+import { env } from '$env/dynamic/public';
 import type { ActionValueSchema } from '@nasa-jpl/plandev-actions';
+import type { PhoenixAdaptation } from '@nasa-jpl/plandev-sequence-languages';
 import JSZip from 'jszip';
 import { PATH_DELIMITER } from '../constants/workspaces';
 import { SearchParameters } from '../enums/searchParameters';
@@ -60,6 +62,58 @@ export function separateFilenameFromPath(filePath: string): { filename: string; 
     filename: '',
     path: filePath,
   };
+}
+
+/**
+ * Whether a file's current revision letter should be appended to its displayed/downloaded name (e.g.
+ * "foo.b.txt"). An adaptation's `showRevisionInFilename` overrides the PUBLIC_SHOW_REVISION_IN_FILENAME env
+ * default when set. Not yet part of the published @nasa-jpl/plandev-sequence-languages types, so it is read
+ * loosely here rather than assumed on PhoenixAdaptation.
+ */
+export function shouldShowRevisionInFilename(
+  adaptation?: (PhoenixAdaptation & { showRevisionInFilename?: boolean }) | null,
+): boolean {
+  if (adaptation?.showRevisionInFilename !== undefined) {
+    return adaptation.showRevisionInFilename;
+  }
+  return env.PUBLIC_SHOW_REVISION_IN_FILENAME === 'true';
+}
+
+/**
+ * Inserts a revision's letter before a file name's extension, for display/download only (e.g. "foo.txt" + "b"
+ * -> "foo.b.txt"). Never changes the file's actual path or name; callers decide per-site whether/when to use it.
+ */
+export function getVersionedFileName(fileName: string, revisionName: string | null | undefined): string {
+  if (!revisionName) {
+    return fileName;
+  }
+  const dotIndex = fileName.indexOf('.');
+  if (dotIndex <= 0) {
+    return `${fileName}.${revisionName}`;
+  }
+  return `${fileName.slice(0, dotIndex)}.${revisionName}${fileName.slice(dotIndex)}`;
+}
+
+/**
+ * The revision letter to use for a download of the file's current working copy, or null if the feature is
+ * off or the working copy doesn't exactly match a revision (so no letter would be accurate). Best-effort: a
+ * failure to look up revisions never blocks the download, it just downloads unversioned.
+ */
+export async function resolveDownloadRevisionName(
+  workspaceId: number,
+  filePath: string,
+  user: User | null,
+  adaptation?: (PhoenixAdaptation & { showRevisionInFilename?: boolean }) | null,
+): Promise<string | null> {
+  if (!shouldShowRevisionInFilename(adaptation)) {
+    return null;
+  }
+  try {
+    const list = await WorkspaceApi.listFileRevisions(workspaceId, filePath, user);
+    return list.matchingRevision?.name ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function cleanPath(path: string | null = '') {

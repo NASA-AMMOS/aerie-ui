@@ -22,8 +22,9 @@
   export let fileMetadata: WorkspaceFileMetadata | null = null;
   export let hasEditPermission: boolean = false;
 
-  let editorView: EditorView | null = null;
   let compartmentReadonly: Compartment = new Compartment();
+  let editorReadOnly: boolean = false;
+  let editorView: EditorView | null = null;
   let hasJsonError: boolean = false;
   let isEditing: boolean = false;
   let lastSavedContent: string = '';

@@ -12,6 +12,7 @@
     TimeTagInfo,
   } from '@nasa-jpl/plandev-sequence-languages';
   import { EditorView } from 'codemirror';
+  import { WorkspaceRightPanelTab } from '../../enums/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { unquoteUnescape } from '../../utilities/sequence-editor/sequence-utils';
   import CommandDictionaryComponent from '../sequencing/CommandPanel/CommandDictionary.svelte';
@@ -23,7 +24,7 @@
   import WorkspaceMetadataPanel from './WorkspaceMetadataPanel.svelte';
   import WorkspaceRevisionsPanel from './WorkspaceRevisionsPanel.svelte';
 
-  export let activeTab: string = 'metadata';
+  export let activeTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
   export let commandNodeName: string | null = null;
   export let editorSequenceView: EditorView | null = null;
   export let commandInfoMapper: CommandInfoMapper | null = null;
@@ -100,7 +101,7 @@
   function onSelectCommandDefinition(event: CustomEvent<(FswCommand | HwCommand) | null>) {
     const { detail } = event;
     selectedCommandDefinition = detail;
-    activeTab = 'dictionary';
+    activeTab = WorkspaceRightPanelTab.DICTIONARY;
   }
 
   // Attach editor listener for tracking selected command
@@ -130,7 +131,7 @@
 </script>
 
 <div class="h-full w-full overflow-auto">
-  {#if activeTab === 'command' && isSequenceFile && editorSequenceView}
+  {#if activeTab === WorkspaceRightPanelTab.COMMAND && isSequenceFile && editorSequenceView}
     {#if phoenixContext.commandDictionary !== null && commandInfoMapper}
       <div class="grid h-full grid-rows-[min-content_auto]">
         <Sidebar.Header className="p-0">
@@ -173,7 +174,7 @@
         </svelte:fragment>
       </Panel>
     {/if}
-  {:else if activeTab === 'dictionary' && isSequenceFile}
+  {:else if activeTab === WorkspaceRightPanelTab.DICTIONARY && isSequenceFile}
     {#if phoenixContext.commandDictionary !== null}
       <div class="grid h-full grid-rows-[min-content_auto]">
         <Sidebar.Header className="p-0">
@@ -199,9 +200,9 @@
         </svelte:fragment>
       </Panel>
     {/if}
-  {:else if activeTab === 'metadata'}
+  {:else if activeTab === WorkspaceRightPanelTab.METADATA}
     <WorkspaceMetadataPanel {filePath} {fileMetadata} {hasEditPermission} on:updateUserMetadata />
-  {:else if activeTab === 'revisions'}
+  {:else if activeTab === WorkspaceRightPanelTab.REVISIONS}
     <WorkspaceRevisionsPanel {filePath} {hasEditPermission} isReadOnly={!!fileMetadata?.readOnly} {reloadWorkingCopy} />
   {/if}
 </div>

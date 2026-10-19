@@ -36,7 +36,7 @@
   import WorkspaceSidebar from '../../../components/workspace/WorkspaceSidebar.svelte';
   import { SearchParameters } from '../../../enums/searchParameters';
   import { Status } from '../../../enums/status';
-  import { WorkspaceContentMode, WorkspaceContentType } from '../../../enums/workspace';
+  import { WorkspaceContentMode, WorkspaceContentType, WorkspaceRightPanelTab } from '../../../enums/workspace';
   import { actionDefinitionsByWorkspace, actionRuns, actionRunsByWorkspace } from '../../../stores/actions';
   import {
     activeDocument,
@@ -171,7 +171,7 @@
   let leftPaneApi: PaneAPI;
   let leftPanelActiveTab: string = initialUrlState.sidebarTab;
   let rightPaneApi: PaneAPI;
-  let rightPanelActiveTab: string = 'metadata';
+  let rightPanelActiveTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
   let rightPanelCommandNodeName: string | null = null;
   let hasEditFilePermission: boolean = false;
   let hasEditWorkspacePermission: boolean = false;
@@ -302,12 +302,12 @@
   let previousActiveFileIsInputSequence: boolean = activeFileIsInputSequence;
   $: if (activeFileIsInputSequence !== previousActiveFileIsInputSequence) {
     previousActiveFileIsInputSequence = activeFileIsInputSequence;
-    if (rightPanelActiveTab === 'revisions') {
+    if (rightPanelActiveTab === WorkspaceRightPanelTab.REVISIONS) {
       // Revisions apply to any file; keep the tab while browsing.
     } else if (!activeFileIsInputSequence) {
-      rightPanelActiveTab = 'metadata';
+      rightPanelActiveTab = WorkspaceRightPanelTab.METADATA;
     } else {
-      rightPanelActiveTab = 'command';
+      rightPanelActiveTab = WorkspaceRightPanelTab.COMMAND;
     }
   }
 
