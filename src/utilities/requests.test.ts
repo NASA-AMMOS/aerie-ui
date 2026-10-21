@@ -310,7 +310,7 @@ describe('reqWorkspaceWithEtag', () => {
       ),
     );
 
-    await expect(reqWorkspaceWithEtag('1/foo.seq', 'PUT', null, null)).rejects.toMatchObject({
+    await expect(reqWorkspaceWithEtag('1/foo.seq', 'PUT', null, null, null)).rejects.toMatchObject({
       currentETag: '"server-tok"',
       lastEditedAt: '2026-06-11T12:00:00Z',
       lastEditedBy: 'alice@example.com',
@@ -329,7 +329,7 @@ describe('reqWorkspaceWithEtag', () => {
 
     let error: unknown;
     try {
-      await reqWorkspaceWithEtag('1/foo.seq', 'PUT', null, null);
+      await reqWorkspaceWithEtag('1/foo.seq', 'PUT', null, null, null);
     } catch (e) {
       error = e;
     }
@@ -355,7 +355,7 @@ describe('reqWorkspaceWithEtag', () => {
 
     let error: unknown;
     try {
-      await reqWorkspaceWithEtag('1/foo.seq', 'PUT', null, null);
+      await reqWorkspaceWithEtag('1/foo.seq', 'PUT', null, null, null);
     } catch (e) {
       error = e;
     }

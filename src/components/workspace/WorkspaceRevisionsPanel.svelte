@@ -8,11 +8,19 @@
   import { catchError } from '../../stores/console';
   import { workspaceId } from '../../stores/workspaces';
   import type { UserStore } from '../../types/app';
+  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { WorkspaceFileRevision, WorkspaceFileRevisionList } from '../../types/workspace';
+  import { downloadBlob } from '../../utilities/generic';
   import { showWorkspaceRevisionPreviewModal } from '../../utilities/modal';
   import { CompoundError, WorkspaceSaveConflictError } from '../../utilities/requests';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
-  import { WorkspaceApi } from '../../utilities/workspaces';
+  import {
+    WorkspaceApi,
+    getVersionedFileName,
+    separateFilenameFromExtension,
+    separateFilenameFromPath,
+  } from '../../utilities/workspaces';
+  import DownloadMenu from '../ui/DownloadMenu.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import * as Sidebar from '../ui/Sidebar/index.js';
   import PanelHeader from './PanelHeader.svelte';
@@ -26,16 +34,26 @@
 
   const user: UserStore = getContext('user');
 
+  let baseEtag: string | null = null;
+  let commitMessage: string = '';
+  let createDisabledReason: string | null = null;
   let isCreating: boolean = false;
   let isLoading: boolean = false;
+  let latest: WorkspaceFileRevision | null = null;
   let list: WorkspaceFileRevisionList | null = null;
   let loadedPath: string | null = null;
+  let matching: WorkspaceFileRevision | null = null;
+  let newestFirst: WorkspaceFileRevision[] = [];
   let notice: string | null = null;
   let requestId: number = 0;
+  let restoreDisabledReason: string | null = null;
+  let revisionStart: string = 'a';
 
   $: newestFirst = list ? [...list.revisions].reverse() : [];
   $: latest = list?.latestRevision ?? null;
   $: matching = list?.matchingRevision ?? null;
+  $: baseFilename = filePath ? separateFilenameFromPath(filePath).filename : '';
+
   // Matching an older revision still allows a new one: returning to it is worth recording.
   $: createDisabledReason = !hasEditPermission
     ? "You don't have permission to create revisions."
@@ -92,7 +110,9 @@
     isCreating = true;
     notice = null;
     try {
-      const revision = await WorkspaceApi.createFileRevision($workspaceId, filePath, $user);
+      // TODO: add `revisionStart` parameter to `createFileRevision`
+      const revision = await WorkspaceApi.createFileRevision($workspaceId, filePath, baseEtag, commitMessage, $user);
+      commitMessage = '';
       showSuccessToast(`Created revision ${revision.name}`);
     } catch (e) {
       // The revision exists but the list can't show it yet; a retry would create the next one.
@@ -121,15 +141,39 @@
       currentContent: $activeDocument.currentContent,
       currentLabel: $activeDocumentIsDirty ? 'Current editor (unsaved)' : 'Working copy',
       filePath: path,
-      restore: () => restore(path, revision, workingCopyETag),
+      restore: revisionToRestore => restore(path, revisionToRestore, workingCopyETag),
       restoreDisabledReason,
       revision,
+      revisions: newestFirst,
       type: $activeDocument.type,
       unrevisionedWarning:
         latest && !matching ? 'The saved copy is not in any revision, so it will be replaced and lost.' : null,
       user: $user,
       workspaceId: $workspaceId,
     });
+  }
+
+  /** The download name choices offered for a revision: its plain name, and its revision-versioned name. */
+  function downloadOptionsForRevision(revision: WorkspaceFileRevision): DownloadMenuOption[] {
+    const { extension } = separateFilenameFromExtension(baseFilename);
+    return [
+      { label: `Download with revision (..${extension})`, name: getVersionedFileName(baseFilename, revision.name) },
+      { label: `Download (..${extension})`, name: baseFilename },
+    ];
+  }
+
+  /** Fetches a past revision's content and downloads it under the chosen name. */
+  async function onDownloadRevision(revision: WorkspaceFileRevision, name: string) {
+    if (!filePath) {
+      return;
+    }
+    try {
+      const content = await WorkspaceApi.getFileRevisionContent($workspaceId, filePath, revision.id, $user);
+      downloadBlob(new Blob([content], { type: 'text/plain' }), name);
+    } catch (e) {
+      catchError('log', 'Failed to download revision', e as Error);
+      showFailureToast('Failed to download revision');
+    }
   }
 
   /** Runs inside the preview modal, which blocks the editor until this (including the reload) settles. */
@@ -155,6 +199,21 @@
     await loadRevisions();
   }
 
+  /** Grows a textarea's height to fit its content as the user types. */
+  function autosize(node: HTMLTextAreaElement) {
+    function resize() {
+      node.style.height = 'auto';
+      node.style.height = `${node.scrollHeight}px`;
+    }
+    resize();
+    node.addEventListener('input', resize);
+    return {
+      destroy() {
+        node.removeEventListener('input', resize);
+      },
+    };
+  }
+
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleString(undefined, {
       day: 'numeric',
@@ -173,56 +232,93 @@
     </PanelHeader>
   </Sidebar.Header>
   <Sidebar.Content className="h-full overflow-auto">
-    {#if !filePath}
-      <div class="p-3 text-sm text-muted-foreground">Open a file to see its revisions.</div>
-    {:else}
-      <section class="flex flex-col gap-2 border-b border-border p-3" aria-label="Working copy">
-        <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Working copy</div>
-        {#if list}
-          <div class="text-sm">
-            {#if !latest}
-              No revisions yet.
-            {:else if matching}
-              Saved copy matches revision <b>{matching.name}</b>
-            {:else}
-              <span class="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500" aria-hidden="true" />
-              Saved changes since revision <b>{latest.name}</b>
-            {/if}
-          </div>
-        {/if}
-        {#if $activeDocumentIsDirty}
-          <div class="text-sm text-amber-700 dark:text-amber-400">
-            <span class="mr-1 inline-block h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />
-            Unsaved editor changes
-          </div>
-        {/if}
-        <Button size="sm" class="mt-1 w-fit" disabled={!!createDisabledReason || isCreating} on:click={onCreate}>
-          {isCreating ? 'Creating…' : 'Create revision'}
-        </Button>
-        {#if createDisabledReason}
-          <div class="text-xs text-muted-foreground">{createDisabledReason}</div>
-        {/if}
-        {#if notice}
-          <div class="rounded border border-border bg-muted p-2 text-xs" role="status">{notice}</div>
-        {/if}
-      </section>
-      <ul class="flex flex-col" aria-label="Revisions">
-        {#each newestFirst as revision (revision.id)}
-          <li>
-            <button
-              class="flex w-full items-baseline gap-3 border-b border-border px-3 py-2 text-left hover:bg-muted"
-              title="Preview revision {revision.name}"
-              on:click={() => onPreview(revision)}
-            >
-              <span class="w-6 flex-none text-base font-semibold">{revision.name}</span>
-              <span class="flex min-w-0 flex-col text-xs text-muted-foreground">
-                <span class="truncate">{revision.createdBy ?? 'Unknown'}</span>
-                <span>{formatDate(revision.createdAt)}</span>
-              </span>
-            </button>
-          </li>
-        {/each}
-      </ul>
-    {/if}
+    <Sidebar.Group className="h-full p-0">
+      <Sidebar.GroupContent className="h-full">
+        <Sidebar.Menu className="h-full text-xs">
+          {#if !filePath}
+            <div class="p-3 text-muted-foreground">Open a file to see its revisions.</div>
+          {:else}
+            <div class="flex flex-col gap-4 p-3">
+              <section class="flex flex-col gap-1" aria-label="Working copy">
+                <span class="font-medium uppercase tracking-wide text-muted-foreground">Working copy</span>
+                <label class="flex flex-col gap-1" for="revision-commit-message">
+                  <span>Revision description <span class="text-muted-foreground">(optional)</span></span>
+                  <textarea
+                    id="revision-commit-message"
+                    bind:value={commitMessage}
+                    use:autosize
+                    class="w-full resize-none overflow-hidden rounded border border-border bg-background p-2 text-xs"
+                    placeholder="Describe this revision"
+                    rows={1}
+                  />
+                </label>
+                {#if $activeDocumentIsDirty}
+                  <div class="text-amber-700 dark:text-amber-400">
+                    <span class="mr-1 inline-block h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />
+                    Unsaved editor changes
+                  </div>
+                {/if}
+                <div class="flex min-h-[26px] items-center gap-2">
+                  <Button class="w-fit" disabled={!!createDisabledReason || isCreating} on:click={onCreate}>
+                    {isCreating ? 'Creating…' : 'Create revision'}
+                  </Button>
+                  {#if !latest}
+                    <div class="grid h-full grid-cols-[auto_1fr] items-center gap-2">
+                      <span>starting with revision</span>
+                      <input
+                        id="revision-start"
+                        type="text"
+                        bind:value={revisionStart}
+                        size={Math.max(1, revisionStart.length)}
+                        class="rounded border border-border bg-background p-1 text-xs"
+                      />
+                    </div>
+                  {/if}
+                </div>
+                {#if createDisabledReason}
+                  <div class="text-muted-foreground">{createDisabledReason}</div>
+                {/if}
+                {#if notice}
+                  <div class="rounded border border-border bg-muted p-2" role="status">{notice}</div>
+                {/if}
+              </section>
+              <div class="flex flex-col gap-1">
+                <span class="font-medium text-muted-foreground">History</span>
+                {#if latest}
+                  <ul class="flex flex-col overflow-hidden rounded border border-border" aria-label="Revisions">
+                    {#each newestFirst as revision, i (revision.id)}
+                      <li class={i > 0 ? 'border-t border-border' : ''}>
+                        <div class="flex items-stretch">
+                          <button
+                            class="flex w-full items-baseline gap-3 px-2 py-1.5 text-left hover:bg-muted"
+                            title="Preview revision {revision.name}"
+                            on:click={() => onPreview(revision)}
+                          >
+                            <span class="w-6 flex-none text-sm font-semibold">{revision.name}</span>
+                            <span class="flex min-w-0 flex-col text-muted-foreground">
+                              <span class="truncate">{revision.createdBy ?? 'Unknown'}</span>
+                              <span>{formatDate(revision.createdAt)}</span>
+                            </span>
+                          </button>
+                          <DownloadMenu
+                            align="end"
+                            className="flex-none px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            label="Download revision {revision.name}"
+                            options={downloadOptionsForRevision(revision)}
+                            onDownload={name => onDownloadRevision(revision, name)}
+                          />
+                        </div>
+                      </li>
+                    {/each}
+                  </ul>
+                {:else}
+                  <div class="text-muted-foreground">No revisions yet.</div>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
   </Sidebar.Content>
 </div>

@@ -180,7 +180,7 @@
     }
   }
 
-  function downloadInputFormat(): void {
+  function downloadInputFormat(_name: string): void {
     dispatch('download', { filePath: textFilePath });
   }
 
@@ -252,6 +252,8 @@
       onCopy={copyInputFormatToClipboard}
       showDownloadButton
       downloadDisabled={disableCopyAndExport}
+      downloadLabel="Download"
+      downloadOptions={[{ label: 'Download', name: textFileName }]}
       onDownload={downloadInputFormat}
       showSaveButton={!(readOnly || previewOnly || isLoading)}
       saveDisabled={!isTextContentUpdated}

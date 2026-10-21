@@ -30,7 +30,7 @@ describe('WorkspaceApi file revisions', () => {
     vi.unstubAllGlobals();
   });
 
-  test('listFileRevisions GETs /revisions/{workspaceId}/{path} and returns the parsed list', async () => {
+  test('listFileRevisions GETs /versioning/{workspaceId}/{path} and returns the parsed list', async () => {
     const list = {
       fileId: 'f-1',
       latestRevision: revision,
@@ -42,7 +42,7 @@ describe('WorkspaceApi file revisions', () => {
 
     await expect(WorkspaceApi.listFileRevisions(3, 'foo/bar.seq', null)).resolves.toEqual(list);
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://ws/revisions/3/foo/bar.seq',
+      'http://ws/versioning/3/foo/bar.seq',
       expect.objectContaining({ method: 'GET' }),
     );
   });
@@ -50,21 +50,21 @@ describe('WorkspaceApi file revisions', () => {
   test('createFileRevision POSTs with no body', async () => {
     const fetchMock = stubFetch(201);
 
-    await expect(WorkspaceApi.createFileRevision(3, 'foo/bar.seq', null)).resolves.toEqual(revision);
+    await expect(WorkspaceApi.createFileRevision(3, 'foo/bar.seq', 'someEtag', null, null)).resolves.toEqual(revision);
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://ws/revisions/3/foo/bar.seq');
+    expect(url).toBe('http://ws/versioning/3/foo/bar.seq');
     expect(options.method).toBe('POST');
     expect(options.body).toBeUndefined();
   });
 
-  test('getFileRevision and getFileRevisionContent use /revision/{workspaceId}/{revisionId}', async () => {
+  test('getFileRevision and getFileRevisionContent use /versioning/{workspaceId}/{revisionId}', async () => {
     let fetchMock = stubFetch(200);
-    await WorkspaceApi.getFileRevision(3, 'r-1', null);
-    expect(fetchMock.mock.calls[0][0]).toBe('http://ws/revision/3/r-1');
+    await WorkspaceApi.getFileRevision(3, 'r-1', 'a', null);
+    expect(fetchMock.mock.calls[0][0]).toBe('http://ws/versioning/metadata/3/r-1?revision=a');
 
     fetchMock = stubFetch(200, 'old contents');
-    await expect(WorkspaceApi.getFileRevisionContent(3, 'r-1', null)).resolves.toBe('old contents');
-    expect(fetchMock.mock.calls[0][0]).toBe('http://ws/revision/3/r-1/content');
+    await expect(WorkspaceApi.getFileRevisionContent(3, 'r-1', 'a', null)).resolves.toBe('old contents');
+    expect(fetchMock.mock.calls[0][0]).toBe('http://ws/versioning/3/r-1/content?revision=a');
   });
 
   test('restoreFileRevision sends the workingCopyETag as If-Match and the revision id as JSON', async () => {
@@ -72,7 +72,7 @@ describe('WorkspaceApi file revisions', () => {
 
     await WorkspaceApi.restoreFileRevision(3, 'foo/bar.seq', 'r-1', '"wc-1"', null);
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://ws/revisions/restore/3/foo/bar.seq');
+    expect(url).toBe('http://ws/versioning/restore/3/foo/bar.seq?revision=r-1');
     expect(options.method).toBe('POST');
     expect(options.headers).toMatchObject({ 'Content-Type': 'application/json', 'If-Match': '"wc-1"' });
     expect(JSON.parse(options.body)).toEqual({ revisionId: 'r-1' });

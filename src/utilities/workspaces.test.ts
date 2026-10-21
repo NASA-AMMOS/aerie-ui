@@ -592,9 +592,9 @@ describe('Workspace utility function tests', () => {
         'PUT',
         body,
         null,
+        null,
         undefined,
         false,
-        {},
       );
     });
 

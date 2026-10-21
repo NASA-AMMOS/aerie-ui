@@ -8,6 +8,8 @@ import { logout } from '../utilities/login';
 import { INVALID_JWT } from '../utilities/permissions';
 import { ErrorTypes } from './errors';
 
+type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
 /**
  * Used to make calls to application external to PlanDev.
  *
@@ -50,7 +52,7 @@ export async function reqExtension(
 
 export async function reqActionServer<T = any>(
   url: string,
-  method: string,
+  method: RequestMethod,
   body: any | null,
   user: BaseUser | User | null,
   signal?: AbortSignal,
@@ -88,7 +90,7 @@ export async function reqActionServer<T = any>(
  */
 export async function reqGateway<T = any>(
   url: string,
-  method: string,
+  method: RequestMethod,
   body: any | null,
   user: BaseUser | User | null,
   excludeContentType: boolean,
@@ -293,7 +295,7 @@ async function throwWorkspaceError(response: Response): Promise<never> {
  */
 export async function reqWorkspace<T = any>(
   url: string,
-  method: string,
+  method: RequestMethod,
   body: any | null,
   user: BaseUser | User | null,
   signal?: AbortSignal,
@@ -376,27 +378,90 @@ export interface WorkspaceResponseWithEtag<T> {
 }
 
 /**
- * Like {@link reqWorkspace}, but returns the response `ETag` + status and, on `412`,
- * throws a typed {@link WorkspaceSaveConflictError}. Used for the editor's file GET/save
- * so the save etag can be threaded through; `reqWorkspace` is left unchanged. `root` picks the
- * service route (file revisions live beside `/ws`, at `/revisions` and `/revision`).
+ * Like {@link reqWorkspace}, but takes an explicit `ifMatch` (sent as the `If-Match` header when set) and
+ * returns the response `ETag` + status, throwing a typed {@link WorkspaceSaveConflictError} on `412`. Used
+ * for the editor's file GET/save so the save etag can be threaded through; `reqWorkspace` is left unchanged.
+ * `root` picks the service route (file revisions live beside `/ws`, at `/versioning`).
+ *
+ * `GET` requests never send `If-Match`, so that overload omits the `ifMatch` parameter entirely.
  */
 export async function reqWorkspaceWithEtag<T = any>(
   url: string,
-  method: string,
-  body: any | null,
+  method: 'GET',
+  body: null,
   user: BaseUser | User | null,
   signal?: AbortSignal,
-  asJson: boolean = false,
-  headerOverrides: HeadersInit = {},
-  root: 'ws' | 'revision' | 'revisions' = 'ws',
+  asJson?: boolean,
+  headerOverrides?: HeadersInit,
+  // root?: 'ws' | 'versioning',
+  root?: 'ws' | 'revision' | 'revisions',
+): Promise<WorkspaceResponseWithEtag<T>>;
+export async function reqWorkspaceWithEtag<T = any>(
+  url: string,
+  method: Exclude<RequestMethod, 'GET'>,
+  body: any | null,
+  ifMatch: string | '*' | null,
+  user: BaseUser | User | null,
+  signal?: AbortSignal,
+  asJson?: boolean,
+  headerOverrides?: HeadersInit,
+  // root?: 'ws' | 'versioning',
+  root?: 'ws' | 'revision' | 'revisions',
+): Promise<WorkspaceResponseWithEtag<T>>;
+export async function reqWorkspaceWithEtag<T = any>(
+  url: string,
+  method: RequestMethod,
+  body: any | null,
+  // The implementation signature has to be able to satisfy both overloads above, so `rest` is a union
+  // of the GET tuple (no `ifMatch`) and the non-GET tuple (`ifMatch` first). Which shape was actually
+  // passed is determined below from `method`.
+  ...rest:
+    | [
+        user: BaseUser | User | null,
+        signal?: AbortSignal,
+        asJson?: boolean,
+        headerOverrides?: HeadersInit,
+        root?: 'ws' | 'revision' | 'revisions',
+      ]
+    | [
+        ifMatch: string | '*' | null,
+        user: BaseUser | User | null,
+        signal?: AbortSignal,
+        asJson?: boolean,
+        headerOverrides?: HeadersInit,
+        root?: 'ws' | 'revision' | 'revisions',
+      ]
 ): Promise<WorkspaceResponseWithEtag<T>> {
+  // Normalize both call shapes into one set of named variables: for GET, there's no `ifMatch` arg in
+  // `rest`, so synthesize `null` for it and shift the rest of `rest` down one slot to line up with the
+  // non-GET tuple shape. The `as` casts are needed because TS can't narrow the union of tuple types
+  // based on the `method === 'GET'` check on its own.
+  const [ifMatch, user, signal, asJson = false, headerOverrides = {}, root = 'ws'] =
+    method === 'GET'
+      ? ([null, ...rest] as [
+          string | '*' | null,
+          BaseUser | User | null,
+          AbortSignal | undefined,
+          boolean | undefined,
+          HeadersInit | undefined,
+          ('ws' | 'revision' | 'revisions') | undefined,
+        ])
+      : (rest as [
+          string | '*' | null,
+          BaseUser | User | null,
+          AbortSignal | undefined,
+          boolean | undefined,
+          HeadersInit | undefined,
+          ('ws' | 'revision' | 'revisions') | undefined,
+        ]);
+
   const WORKSPACE_URL = env.PUBLIC_WORKSPACE_CLIENT_URL;
 
   const headers: HeadersInit = {
     Authorization: `Bearer ${user?.token ?? ''}`,
     'x-hasura-role': (user as User)?.activeRole ?? '',
     'x-hasura-user-id': user?.id ?? '',
+    ...(ifMatch ? { 'If-Match': ifMatch } : {}),
     ...headerOverrides,
   };
   const options: RequestInit = {
@@ -446,7 +511,7 @@ export async function reqWorkspaceWithEtag<T = any>(
 
 export async function reqWorkspaceMetadata<T = any>(
   url: string,
-  method: string,
+  method: RequestMethod,
   body: any | null,
   user: BaseUser | User | null,
   signal?: AbortSignal,

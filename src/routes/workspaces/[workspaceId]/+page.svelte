@@ -130,10 +130,12 @@
     findNodeAffectingPath,
     flattenWorkspaceTreeWithPaths,
     getAvailableActionsForNodes,
+    getVersionedFileName,
     isPathInBreadcrumb,
     mapWorkspaceTreePaths,
     parseUrlState,
     removeRedundantNodes,
+    resolveDownloadRevisionName,
     separateFilenameFromPath,
     WorkspaceApi,
   } from '../../../utilities/workspaces';
@@ -159,7 +161,9 @@
     'w-[3px] hover:after:bg-neutral-300 hover:after:transition-all hover:after:delay-[400ms] data-[active]:after:bg-neutral-300 data-[active]:after:transition-all';
 
   let activeFileIsInputSequence: boolean = false;
+  let activeFileHasRevisions: boolean = false;
   let activeFileMetadata: WorkspaceFileMetadata | null = null;
+  let activeFileRevisionName: string | null = null;
   let activeFileIsSequence: boolean = false;
   let availableActionsForActiveFile: ActionParameterPair[] = [];
   let panelsReady: boolean = false;
@@ -283,6 +287,8 @@
   }
 
   $: activeFileMetadata = ($activeDocumentPath && workspaceTreeMap[$activeDocumentPath]?.metadata) || null;
+  // Prefetched (not resolved at download time) so the download dropdown's options are known up front.
+  $: loadActiveFileRevisionName($activeDocumentPath, $activeDocument.baseEtag);
   $: activeFileIsSequence =
     $activeDocumentPath === null ||
     ($activeDocument.type !== null && $activeDocument.type === WorkspaceContentType.Sequence);
@@ -944,8 +950,27 @@
     if ($workspace && $user) {
       const blob = await effects.getWorkspaceFileContentBlob($workspace, filePath, $user);
       if (blob !== null) {
-        downloadBlob(blob, filePath.split('/').pop() || 'download');
+        const revisionName = await resolveDownloadRevisionName($workspace.id, filePath, $user);
+        downloadBlob(blob, getVersionedFileName(filePath.split('/').pop() || 'download', revisionName));
       }
+    }
+  }
+
+  /** The active file's revision state, kept current so the editor's download dropdown can offer both naming
+   * conventions (and know whether to offer the versioned one at all) without resolving on every click. */
+  async function loadActiveFileRevisionName(path: string | null, _baseEtag: string | null) {
+    if (!path || !$workspace) {
+      activeFileHasRevisions = false;
+      activeFileRevisionName = null;
+      return;
+    }
+    try {
+      const list = await WorkspaceApi.listFileRevisions($workspace.id, path, $user);
+      activeFileHasRevisions = list.latestRevision !== null;
+      activeFileRevisionName = list.matchingRevision?.name ?? null;
+    } catch {
+      activeFileHasRevisions = false;
+      activeFileRevisionName = null;
     }
   }
 
@@ -1548,8 +1573,10 @@
     window.open(`${base}/workspaces/${$workspaceId}?sequenceId=${encodeURIComponent(treeNodePath)}`, '_blank');
   }
 
-  async function onDownloadInput(event: CustomEvent<{ filePath: string }>) {
-    const { filePath } = event.detail;
+  // `filename` is set when the caller already offered a plain/revision-versioned choice (the sequence
+  // editor's download dropdown); callers without one (e.g. the plain text editor) fall back to resolving it.
+  async function onDownloadInput(event: CustomEvent<{ filePath: string; filename?: string }>) {
+    const { filePath, filename } = event.detail;
 
     // Check if downloading the active file with unsaved changes
     if (filePath === $activeDocumentPath && $activeDocumentIsDirty) {
@@ -1558,8 +1585,17 @@
       }
     }
 
-    // Trigger the actual download
-    onDownloadFile(filePath);
+    if ($workspace && $user) {
+      const blob = await effects.getWorkspaceFileContentBlob($workspace, filePath, $user);
+      if (blob !== null) {
+        if (filename) {
+          downloadBlob(blob, filename);
+        } else {
+          const revisionName = await resolveDownloadRevisionName($workspace.id, filePath, $user);
+          downloadBlob(blob, getVersionedFileName(filePath.split('/').pop() || 'download', revisionName));
+        }
+      }
+    }
   }
 
   async function onDownloadOutput(event: CustomEvent<{ content: string; filePath: string; filename: string }>) {
@@ -1573,7 +1609,8 @@
     }
 
     // Trigger the actual download with in-memory content
-    downloadFileContent(content, filename);
+    const revisionName = $workspace ? await resolveDownloadRevisionName($workspace.id, filePath, $user) : null;
+    downloadFileContent(content, getVersionedFileName(filename, revisionName));
   }
 
   function onGlobalKeydown(event: KeyboardEvent) {
@@ -1778,6 +1815,8 @@
                     includeActions={hasRunActionPermission}
                     isLoading={$activeDocumentIsLoading}
                     isInputFile={activeFileIsInputSequence}
+                    hasRevisions={activeFileHasRevisions}
+                    matchingRevisionName={activeFileRevisionName}
                     onReadOnlyChange={readOnly => onReadOnlyChange(readOnly)}
                     {preserveAdaptationLog}
                     previewOnly={!hasEditFilePermission}

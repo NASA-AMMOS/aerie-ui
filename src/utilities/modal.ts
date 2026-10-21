@@ -1818,14 +1818,19 @@ export async function showWorkspaceSaveConflictModal(props: {
   });
 }
 
-/** Previews a file revision against the current content. A confirmed Restore runs `restore` before the modal closes. */
+/**
+ * Previews a file revision against the current content, or lets the user pick any two of
+ * {revisions, working copy} to compare. A confirmed Restore runs `restore` (with whichever revision ends up
+ * on the non-working-copy side) before the modal closes.
+ */
 export async function showWorkspaceRevisionPreviewModal(props: {
   currentContent: string;
   currentLabel: string;
   filePath: string;
-  restore: () => Promise<void>;
+  restore: (revision: WorkspaceFileRevision) => Promise<void>;
   restoreDisabledReason: string | null;
   revision: WorkspaceFileRevision;
+  revisions: WorkspaceFileRevision[];
   type: WorkspaceContentType | null;
   unrevisionedWarning: string | null;
   user: User | null;

@@ -20,13 +20,19 @@
   import { clearWorkspaceAdaptationMessages } from '../../stores/workspaceErrors';
   import type { ActionDefinition } from '../../types/actions';
   import type { LintDiagnostic } from '../../types/console';
+  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { getLintDiagnostics } from '../../utilities/codemirror/lint';
   import { readOnlyChangeGuard } from '../../utilities/codemirror/readOnly';
   import { blockTheme } from '../../utilities/codemirror/themes/block';
   import { phoenixResources } from '../../utilities/sequence-editor/adaptation-resources';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
-  import { doesFilenameMatchExtension, replaceFileExtension } from '../../utilities/workspaces';
+  import {
+    doesFilenameMatchExtension,
+    getVersionedFileName,
+    replaceFileExtension,
+    separateFilenameFromExtension,
+  } from '../../utilities/workspaces';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -39,10 +45,14 @@
   export let availableActions: { action: ActionDefinition; parameter: string }[] = [];
   export let fileMetadata: WorkspaceFileMetadata | null = null;
   export let phoenixContext: PhoenixContext | undefined;
+  /** Whether the file has any revisions at all; the "Download with revision" option is hidden when false. */
+  export let hasRevisions: boolean = false;
   export let includeActions: boolean = false;
   export let preserveAdaptationLog: boolean = false;
   export let isLoading: boolean = false;
   export let isInputFile: boolean = false;
+  /** The working copy's matching revision letter, if any; null when it has revisions but doesn't match one. */
+  export let matchingRevisionName: string | null = null;
   export let previewOnly: boolean = false;
   export let readOnly: boolean = false;
   export let sequenceAdaptation: PhoenixAdaptation;
@@ -58,7 +68,7 @@
 
   const dispatch = createEventDispatcher<{
     adaptationError: { error: Error; filePath: string };
-    downloadInput: { filePath: string };
+    downloadInput: { filePath: string; filename: string };
     downloadOutput: { content: string; filePath: string; filename: string };
     editorViewChange: EditorView | null;
     lintChange: { diagnostics: LintDiagnostic[]; filePath: string };
@@ -300,8 +310,31 @@
     }
   }
 
-  function downloadInputFormat(): void {
-    dispatch('downloadInput', { filePath: sequenceFilePath });
+  /**
+   * The download name choices for the input file: its plain name, and (only once the file has at least one
+   * revision) its revision-versioned name. Disabled with an explanation when revisions exist but the
+   * working copy doesn't currently match one; omitted entirely when the file has no revisions yet.
+   */
+  function downloadOptionsFor(
+    name: string,
+    revisionName: string | null,
+    fileHasRevisions: boolean,
+  ): DownloadMenuOption[] {
+    const { extension } = separateFilenameFromExtension(name);
+    const options: DownloadMenuOption[] = [{ label: `Download (..${extension})`, name }];
+    if (fileHasRevisions) {
+      options.unshift({
+        disabled: !revisionName,
+        disabledReason: revisionName ? undefined : "The working copy doesn't match a revision.",
+        label: `Download with revision (..${extension})`,
+        name: revisionName ? getVersionedFileName(name, revisionName) : name,
+      });
+    }
+    return options;
+  }
+
+  function downloadInputFormat(name: string): void {
+    dispatch('downloadInput', { filePath: sequenceFilePath, filename: name });
   }
 
   async function copyOutputFormatToClipboard(): Promise<void> {
@@ -471,7 +504,8 @@
           onCopy={copyInputFormatToClipboard}
           showDownloadButton
           downloadDisabled={disableCopyAndExport}
-          downloadTooltip="Download sequence contents"
+          downloadLabel="Download sequence contents"
+          downloadOptions={downloadOptionsFor(sequenceName, matchingRevisionName, hasRevisions)}
           onDownload={downloadInputFormat}
           showSaveButton={!(readOnly || previewOnly || isLoading)}
           saveDisabled={!isSequenceDefinitionUpdated}
