@@ -292,20 +292,14 @@
     }
   }, 300);
 
-  function downloadOutputFormat(): void {
+  function downloadOutputFormat(event: CustomEvent<{ name: string }>): void {
     const content = editorOutputView.state.doc.toString();
 
     if (selectedOutputFormat) {
-      const filename = replaceFileExtension(
-        sequenceName,
-        sequenceAdaptation.input.fileExtension,
-        selectedOutputFormat.fileExtension,
-      );
-
       dispatch('downloadOutput', {
         content,
         filePath: sequenceFilePath,
-        filename,
+        filename: event.detail.name,
       });
     }
   }
@@ -535,6 +529,17 @@
               isPreviewOpen={toggleSeqJsonPreview}
               outputLanguages={sequenceAdaptation.outputs}
               outputDisabled={disableCopyAndExport}
+              downloadOptions={selectedOutputFormat
+                ? downloadOptionsFor(
+                    replaceFileExtension(
+                      sequenceName,
+                      sequenceAdaptation.input.fileExtension,
+                      selectedOutputFormat.fileExtension,
+                    ),
+                    matchingRevisionName,
+                    hasRevisions,
+                  )
+                : []}
               on:copyOutput={copyOutputFormatToClipboard}
               on:downloadOutput={downloadOutputFormat}
               on:togglePreview={toggleSeqJsonEditor}

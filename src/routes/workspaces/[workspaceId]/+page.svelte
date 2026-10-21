@@ -1598,6 +1598,7 @@
     }
   }
 
+  // `filename` was already chosen (plain or revision-versioned) in the editor's download dropdown.
   async function onDownloadOutput(event: CustomEvent<{ content: string; filePath: string; filename: string }>) {
     const { content, filePath, filename } = event.detail;
 
@@ -1608,9 +1609,7 @@
       }
     }
 
-    // Trigger the actual download with in-memory content
-    const revisionName = $workspace ? await resolveDownloadRevisionName($workspace.id, filePath, $user) : null;
-    downloadFileContent(content, getVersionedFileName(filename, revisionName));
+    downloadFileContent(content, filename);
   }
 
   function onGlobalKeydown(event: KeyboardEvent) {

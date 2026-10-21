@@ -17,6 +17,7 @@
   /** One entry per naming convention offered, e.g. plain filename and/or the revision-versioned filename. */
   export let options: DownloadMenuOption[];
   export let size: 'icon' | undefined = undefined;
+  export let variant: 'ghost' | 'default' | 'link' | 'destructive' | 'outline' | 'secondary' | undefined = 'outline';
 
   $: singleOption = options.length === 1 ? options[0] : null;
 
@@ -33,11 +34,11 @@
     disabled={!singleOption.disabled || !singleOption.disabledReason}
   >
     <Button
-      variant="ghost"
+      {variant}
       {size}
       disabled={disabled || (singleOption.disabled && !singleOption.disabledReason)}
       class={cn(
-        'flex items-center gap-0.5',
+        'flex shrink-0 items-center gap-0.5',
         singleOption.disabled && singleOption.disabledReason ? 'cursor-not-allowed opacity-50' : '',
         className,
       )}
@@ -45,7 +46,7 @@
       aria-label={label}
       on:click={() => selectOption(singleOption)}
     >
-      <Download size={14} />
+      <Download size={14} class="shrink-0" />
     </Button>
   </Tooltip>
 {:else}
@@ -53,15 +54,15 @@
     <DropdownMenu.Trigger asChild let:builder>
       <Button
         builders={[builder]}
-        variant="ghost"
+        {variant}
         {size}
         {disabled}
-        class={cn('flex items-center gap-0.5', className)}
+        class={cn('flex w-auto shrink-0 items-center gap-0.5', className)}
         title={label}
         aria-label={label}
       >
-        <Download size={14} />
-        <ChevronDown size={10} />
+        <Download size={14} class="shrink-0" />
+        <ChevronDown size={10} class="shrink-0" />
       </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content {align} class="z-[10000]">

@@ -302,6 +302,7 @@
                           </button>
                           <DownloadMenu
                             align="end"
+                            variant="ghost"
                             className="flex-none px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                             label="Download revision {revision.name}"
                             options={downloadOptionsForRevision(revision)}

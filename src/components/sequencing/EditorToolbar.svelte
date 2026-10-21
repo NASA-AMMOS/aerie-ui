@@ -87,6 +87,7 @@
 
   {#if showDownloadButton && onDownload}
     <DownloadMenu
+      className="px-2"
       size="icon"
       disabled={downloadDisabled}
       label={downloadLabel}
