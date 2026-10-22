@@ -29,10 +29,7 @@
 </script>
 
 {#if singleOption}
-  <Tooltip
-    content={singleOption.disabledReason ?? ''}
-    disabled={!singleOption.disabled || !singleOption.disabledReason}
-  >
+  <Tooltip content={singleOption.disabledReason ?? label}>
     <Button
       {variant}
       {size}
@@ -42,7 +39,6 @@
         singleOption.disabled && singleOption.disabledReason ? 'cursor-not-allowed opacity-50' : '',
         className,
       )}
-      title={label}
       aria-label={label}
       on:click={() => selectOption(singleOption)}
     >
@@ -51,20 +47,30 @@
   </Tooltip>
 {:else}
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger asChild let:builder>
-      <Button
-        builders={[builder]}
-        {variant}
-        {size}
-        {disabled}
-        class={cn('flex w-auto shrink-0 items-center gap-0.5', className)}
-        title={label}
-        aria-label={label}
-      >
-        <Download size={14} class="shrink-0" />
-        <ChevronDown size={10} class="shrink-0" />
-      </Button>
-    </DropdownMenu.Trigger>
+    <!--
+      Keyed on `disabled`: bits-ui's trigger action stamps `data-disabled`/`aria-disabled` onto the
+      node once, at mount, based on whether it's disabled then, and never updates them afterward. Without
+      this key, a trigger that mounts disabled stays stuck looking (and, via Tooltip's `aria-disabled`
+      based styling, behaving) disabled even after `disabled` becomes false. Keying forces the trigger
+      (and its action) to remount whenever `disabled` changes, so the stamped attributes stay in sync.
+    -->
+    {#key disabled}
+      <DropdownMenu.Trigger asChild let:builder>
+        <Tooltip content={label}>
+          <Button
+            builders={[builder]}
+            {variant}
+            {size}
+            {disabled}
+            class={cn('flex w-auto shrink-0 items-center gap-0.5', className)}
+            aria-label={label}
+          >
+            <Download size={14} class="shrink-0" />
+            <ChevronDown size={10} class="shrink-0" />
+          </Button>
+        </Tooltip>
+      </DropdownMenu.Trigger>
+    {/key}
     <DropdownMenu.Content {align} class="z-[10000]">
       {#each options as option (option.label)}
         <Tooltip

@@ -256,7 +256,7 @@
       onCopy={copyInputFormatToClipboard}
       showDownloadButton
       downloadDisabled={disableCopyAndExport}
-      downloadLabel="Download"
+      downloadLabel="Download File Contents"
       downloadOptions={getDownloadOptionsForFile(
         textFileName,
         doesWorkingCopyMatchRevision,
