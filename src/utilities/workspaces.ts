@@ -83,16 +83,17 @@ export function separateFilenameFromExtension(filename: string): { extension: st
  * Inserts a revision's letter before a file name's extension, for display/download only (e.g. "foo.txt" + "b"
  * -> "foo.b.txt"). Never changes the file's actual path or name; callers decide per-site whether/when to use it.
  */
-export function getVersionedFileName(fileName: string, revisionName: string | null | undefined): string {
+export function getVersionedFileName(filePath: string, revisionName: string | null | undefined): string {
+  const { filename } = separateFilenameFromPath(filePath);
   if (!revisionName) {
-    return fileName;
+    return filename;
   }
 
-  const { extension, filename } = separateFilenameFromExtension(fileName);
+  const { extension, filename: baseFilename } = separateFilenameFromExtension(filename);
   if (!extension) {
-    return `${filename}.${revisionName}`;
+    return `${baseFilename}.${revisionName}`;
   }
-  return `${filename}.${revisionName}.${extension}`;
+  return `${baseFilename}.${revisionName}.${extension}`;
 }
 
 /**
@@ -836,7 +837,7 @@ export async function downloadWorkspaceNodesAsZip(options: {
           // Fallback for edge cases
           relativePath = filePath;
         }
-        zip.file(getVersionedFileName(relativePath.split('/').pop() || 'download', revisionName), blob);
+        zip.file(getVersionedFileName(relativePath || 'download', revisionName), blob);
       } else {
         failedFiles++;
       }

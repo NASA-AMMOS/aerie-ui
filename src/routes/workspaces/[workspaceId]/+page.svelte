@@ -954,7 +954,7 @@
       const blob = await effects.getWorkspaceFileContentBlob($workspace, filePath, $user);
       if (blob !== null) {
         const revisionName = withRevision ? await resolveDownloadRevisionName($workspace.id, filePath, $user) : null;
-        downloadBlob(blob, getVersionedFileName(filePath.split('/').pop() || 'download', revisionName));
+        downloadBlob(blob, getVersionedFileName(filePath || 'download', revisionName));
       }
     }
   }
@@ -1660,7 +1660,7 @@
           downloadBlob(blob, filename);
         } else {
           const revisionName = await resolveDownloadRevisionName($workspace.id, filePath, $user);
-          downloadBlob(blob, getVersionedFileName(filePath.split('/').pop() || 'download', revisionName));
+          downloadBlob(blob, getVersionedFileName(filePath || 'download', revisionName));
         }
       }
     }

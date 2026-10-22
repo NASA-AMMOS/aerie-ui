@@ -14,8 +14,10 @@ import {
   flattenWorkspaceTreeWithPaths,
   getAvailableActionsForNodes,
   getCommonPathPrefix,
+  getDownloadOptionsForFile,
   getFolderPathForNode,
   getSelectedFilesDisplay,
+  getVersionedFileName,
   getWorkspaceFileFolderDisplay,
   hasReadonlyInTree,
   incrementFilename,
@@ -26,6 +28,8 @@ import {
   removeFirstPathSegment,
   removeRedundantNodes,
   replaceFileExtension,
+  resolveDownloadRevisionName,
+  separateFilenameFromExtension,
   separateFilenameFromPath,
   shouldNodeBeVisible,
   sortWorkspaceTree,
@@ -74,6 +78,124 @@ describe('Workspace utility function tests', () => {
         filename: 'bar',
         path: '',
       });
+    });
+  });
+
+  describe('separateFilenameFromExtension', () => {
+    test('Should separate a simple filename from its extension', () => {
+      expect(separateFilenameFromExtension('bar.foo')).toEqual({ extension: 'foo', filename: 'bar' });
+    });
+
+    test('Should return an empty extension when the filename has none', () => {
+      expect(separateFilenameFromExtension('bar')).toEqual({ extension: '', filename: 'bar' });
+    });
+
+    test('Should keep everything after the first dot as the extension', () => {
+      expect(separateFilenameFromExtension('bar.tar.gz')).toEqual({ extension: 'tar.gz', filename: 'bar' });
+    });
+
+    test('Should treat a leading dot as having no extension', () => {
+      expect(separateFilenameFromExtension('.hidden')).toEqual({ extension: '', filename: '.hidden' });
+    });
+  });
+
+  describe('getVersionedFileName', () => {
+    test('Should insert the revision letter before the extension', () => {
+      expect(getVersionedFileName('bar.foo', 'b')).toEqual('bar.b.foo');
+    });
+
+    test('Should use just the filename, dropping any directory path', () => {
+      expect(getVersionedFileName('foo/bar.txt', 'b')).toEqual('bar.b.txt');
+    });
+
+    test('Should append the revision letter directly when there is no extension', () => {
+      expect(getVersionedFileName('bar', 'b')).toEqual('bar.b');
+    });
+
+    test('Should return just the filename when there is no revision', () => {
+      expect(getVersionedFileName('foo/bar.txt', null)).toEqual('bar.txt');
+      expect(getVersionedFileName('foo/bar.txt', undefined)).toEqual('bar.txt');
+      expect(getVersionedFileName('foo/bar.txt', '')).toEqual('bar.txt');
+    });
+  });
+
+  describe('resolveDownloadRevisionName', () => {
+    afterEach(() => {
+      vi.mocked(WorkspaceApi.getFileRevisionList).mockRestore();
+    });
+
+    test('Should return the matching revision name', async () => {
+      vi.spyOn(WorkspaceApi, 'getFileRevisionList').mockResolvedValue({ matchingRevision: 'b', revisions: [] });
+      expect(await resolveDownloadRevisionName(1, 'foo/bar.seq', null)).toEqual('b');
+    });
+
+    test('Should return null when the working copy does not match a revision', async () => {
+      vi.spyOn(WorkspaceApi, 'getFileRevisionList').mockResolvedValue({ matchingRevision: null, revisions: [] });
+      expect(await resolveDownloadRevisionName(1, 'foo/bar.seq', null)).toBeNull();
+    });
+
+    test('Should return null instead of throwing when the lookup fails', async () => {
+      vi.spyOn(WorkspaceApi, 'getFileRevisionList').mockRejectedValue(new Error('failed'));
+      expect(await resolveDownloadRevisionName(1, 'foo/bar.seq', null)).toBeNull();
+    });
+  });
+
+  describe('getDownloadOptionsForFile', () => {
+    test('offers only the plain download when the file has no revisions yet', () => {
+      expect(getDownloadOptionsForFile('bar.foo', false, null)).toEqual([
+        { label: 'Download (...foo)', name: 'bar.foo' },
+      ]);
+      expect(getDownloadOptionsForFile('bar.foo', true, null)).toEqual([
+        { label: 'Download (...foo)', name: 'bar.foo' },
+      ]);
+    });
+
+    test('adds an enabled revisioned download when the working copy matches the revision', () => {
+      expect(getDownloadOptionsForFile('bar.foo', true, 'b')).toEqual([
+        { label: 'Download (...foo)', name: 'bar.foo' },
+        {
+          disabled: false,
+          disabledReason: undefined,
+          label: 'Download with revision (...b.foo)',
+          name: 'bar.b.foo',
+        },
+      ]);
+    });
+
+    test('disables the revisioned download, with a reason, when the working copy does not match the revision', () => {
+      expect(getDownloadOptionsForFile('bar.foo', false, 'b')).toEqual([
+        { label: 'Download (...foo)', name: 'bar.foo' },
+        {
+          disabled: true,
+          disabledReason: 'The working copy contains unrevisioned changes.',
+          label: 'Download with revision (...b.foo)',
+          name: 'bar.b.foo',
+        },
+      ]);
+    });
+
+    test('falls back to the plain name for the revisioned option when revisionName is an empty string', () => {
+      expect(getDownloadOptionsForFile('bar.foo', true, '')).toEqual([
+        { label: 'Download (...foo)', name: 'bar.foo' },
+        {
+          disabled: false,
+          disabledReason: undefined,
+          label: 'Download with revision (...foo)',
+          name: 'bar.foo',
+        },
+      ]);
+    });
+
+    test('handles filenames with no extension', () => {
+      expect(getDownloadOptionsForFile('bar', true, 'b')).toEqual([
+        { label: 'Download (...)', name: 'bar' },
+        {
+          disabled: false,
+          disabledReason: undefined,
+          label: 'Download with revision (...b)',
+          name: 'bar.b',
+        },
+      ]);
     });
   });
 
