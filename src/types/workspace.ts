@@ -56,7 +56,10 @@ export type WorkspaceFileRevision = {
 };
 
 /** A revision plus its versioned metadata as it was then (no readOnly or lastEdited*). */
-export type WorkspaceFileRevisionDetail = WorkspaceFileRevision & { metadata: Record<string, unknown> };
+export type WorkspaceFileRevisionDetail = {
+  fileMetadata: Record<string, unknown>;
+  versionMetadata: WorkspaceFileRevision;
+};
 
 /** A file's revisions, oldest first, plus which of them (if any) holds the saved copy. */
 export type WorkspaceFileRevisionList = {

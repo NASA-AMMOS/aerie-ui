@@ -30,6 +30,7 @@
     lastEditedBy: string | null;
     loading: boolean;
     metadata: Record<string, unknown> | null;
+    pathAtRevision: string;
   }
 
   export let currentContent: string;
@@ -58,6 +59,7 @@
     lastEditedBy: null,
     loading: true,
     metadata: null,
+    pathAtRevision: '',
   };
 
   let changedLines: number = 0;
@@ -72,6 +74,7 @@
   let leftState: SideState = { ...emptySideState };
   let loadError: boolean;
   let metadataDiffers: boolean;
+  let pathDiffers: boolean;
   let revisions: WorkspaceFileRevision[] = [];
   let revisionToRestore: WorkspaceFileRevision | null;
   let rightDownloadOptions: ReturnType<typeof getDownloadOptionsForFile>;
@@ -84,6 +87,7 @@
   $: loadError = leftState.error || rightState.error;
   $: metadataDiffers =
     !isLoading && !loadError && canonical(leftState.metadata) !== canonical(rightState.metadata ?? {});
+  $: pathDiffers = !isLoading && !loadError && leftState.pathAtRevision !== rightState.pathAtRevision;
   $: revisionToRestore = leftSide.kind === 'workingCopy' ? rightRevision : null;
   $: effectiveRestoreDisabledReason =
     restoreDisabledReason ??
@@ -127,7 +131,7 @@
 
   async function loadRevisionState(rev: WorkspaceFileRevision): Promise<SideState> {
     try {
-      const [content, { metadata }] = await Promise.all([
+      const [content, data] = await Promise.all([
         WorkspaceApi.getFileRevisionContent(workspaceId, filePath, rev.name, user),
         WorkspaceApi.getFileRevision(workspaceId, filePath, rev.name, user),
       ]);
@@ -137,10 +141,19 @@
         lastEditedAt: rev.lastEditedAt,
         lastEditedBy: rev.lastEditedBy,
         loading: false,
-        metadata,
+        metadata: data.fileMetadata,
+        pathAtRevision: rev.pathAtRevision,
       };
     } catch {
-      return { content: '', error: true, lastEditedAt: null, lastEditedBy: null, loading: false, metadata: null };
+      return {
+        content: '',
+        error: true,
+        lastEditedAt: null,
+        lastEditedBy: null,
+        loading: false,
+        metadata: null,
+        pathAtRevision: '',
+      };
     }
   }
 
@@ -155,9 +168,18 @@
           lastEditedBy: metadata?.lastEditedBy ?? null,
           loading: false,
           metadata,
+          pathAtRevision: filePath,
         };
       } catch {
-        return { content: '', error: true, lastEditedAt: null, lastEditedBy: null, loading: false, metadata: null };
+        return {
+          content: '',
+          error: true,
+          lastEditedAt: null,
+          lastEditedBy: null,
+          loading: false,
+          metadata: null,
+          pathAtRevision: filePath,
+        };
       }
     }
     return loadRevisionState(side.revision);
@@ -267,10 +289,9 @@
     </div>
     <div class="st-typography-body flex-none text-muted-foreground">
       {#if !isLoading && !loadError}
-        {changedLines === 0
-          ? `${metadataDiffers ? 'Content is' : 'No'} differences`
-          : `${changedLines} changed ${changedLines === 1 ? 'line' : 'lines'}`}
-        {#if metadataDiffers}· File metadata also differs.{/if}
+        {changedLines > 0 ? 'Content contains' : 'No content'} differences
+        {#if metadataDiffers}· File metadata differs{/if}
+        {#if pathDiffers}· File path differs ({leftState.pathAtRevision} vs {rightState.pathAtRevision}){/if}
       {/if}
     </div>
     <div class="flex min-h-0 flex-auto overflow-hidden rounded border">
