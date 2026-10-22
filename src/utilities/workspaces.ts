@@ -10,7 +10,6 @@ import type { DownloadMenuOption } from '../types/dropdown';
 import type {
   ActionParameterPair,
   Workspace,
-  WorkspaceFileRevision,
   WorkspaceFileRevisionDetail,
   WorkspaceFileRevisionList,
   WorkspaceInsertInput,
@@ -1159,11 +1158,11 @@ export const WorkspaceApi = {
     revisionId: string,
     workingCopyETag: string,
     user: User | null,
-  ): Promise<WorkspaceFileRevision> {
-    const { data } = await reqWorkspaceWithEtag<WorkspaceFileRevision>(
+  ): Promise<string> {
+    const { data } = await reqWorkspaceWithEtag<string>(
       `${joinPath(['restore', workspaceId, filePath])}?revision=${revisionId}`,
       'POST',
-      null,
+      JSON.stringify({ revisionId }),
       workingCopyETag,
       user,
       undefined,
