@@ -205,49 +205,53 @@
 <Modal height="min(680px, 85vh)" width="min(1200px, 92vw)" on:close={close}>
   <ModalHeader on:close={close}>Comparing {leftLabel} with {rightLabel}</ModalHeader>
   <ModalContent style="display: flex; flex-direction: column; gap: 8px; overflow: hidden;">
-    <div class="flex flex-none flex-wrap items-center gap-2 text-sm">
-      <span class="text-muted-foreground">Compare</span>
-      <span class="font-medium">{leftFilename}</span>
-      <select
-        class="st-select"
-        value={sideKey(leftSide)}
-        on:change={e => selectLeft(sideFromKey(e.currentTarget.value, leftRevisions))}
-      >
-        <option value="workingCopy">Working copy</option>
-        {#each leftRevisions as rev (rev.name)}
-          <option value={rev.name}>Revision {rev.name} · {formatDate(rev.createdAt)}</option>
-        {/each}
-      </select>
-      <DownloadMenu
-        align="start"
-        className="px-2"
-        size="icon"
-        disabled={leftState.loading || leftState.error}
-        label="Download {leftLabel}"
-        options={leftDownloadOptions}
-        onDownload={name => onDownloadSide(leftState, name)}
-      />
-      <span class="text-muted-foreground">with</span>
-      <span class="font-medium">{rightFilename}</span>
-      <select
-        class="st-select"
-        value={sideKey(rightSide)}
-        on:change={e => selectRight(sideFromKey(e.currentTarget.value, rightRevisions))}
-      >
-        <option value="workingCopy">Working copy</option>
-        {#each rightRevisions as rev (rev.name)}
-          <option value={rev.name}>Revision {rev.name} · {formatDate(rev.createdAt)}</option>
-        {/each}
-      </select>
-      <DownloadMenu
-        align="start"
-        className="px-2"
-        size="icon"
-        disabled={rightState.loading || rightState.error}
-        label="Download {rightLabel}"
-        options={rightDownloadOptions}
-        onDownload={name => onDownloadSide(rightState, name)}
-      />
+    <div class="grid grid-cols-2">
+      <div class="flex flex-none flex-wrap items-center gap-2 text-sm">
+        <span class="text-muted-foreground">Compare</span>
+        <span class="font-medium">{leftFilename}</span>
+        <select
+          class="st-select"
+          value={sideKey(leftSide)}
+          on:change={e => selectLeft(sideFromKey(e.currentTarget.value, leftRevisions))}
+        >
+          <option value="workingCopy">Working copy</option>
+          {#each leftRevisions as rev (rev.name)}
+            <option value={rev.name}>Revision {rev.name} · {formatDate(rev.createdAt)}</option>
+          {/each}
+        </select>
+        <DownloadMenu
+          align="start"
+          className="px-2"
+          size="icon"
+          disabled={leftState.loading || leftState.error}
+          label="Download {leftLabel}"
+          options={leftDownloadOptions}
+          onDownload={name => onDownloadSide(leftState, name)}
+        />
+      </div>
+      <div class="flex flex-none flex-wrap items-center gap-2 text-sm">
+        <span class="text-muted-foreground">with</span>
+        <span class="font-medium">{rightFilename}</span>
+        <select
+          class="st-select"
+          value={sideKey(rightSide)}
+          on:change={e => selectRight(sideFromKey(e.currentTarget.value, rightRevisions))}
+        >
+          <option value="workingCopy">Working copy</option>
+          {#each rightRevisions as rev (rev.name)}
+            <option value={rev.name}>Revision {rev.name} · {formatDate(rev.createdAt)}</option>
+          {/each}
+        </select>
+        <DownloadMenu
+          align="start"
+          className="px-2"
+          size="icon"
+          disabled={rightState.loading || rightState.error}
+          label="Download {rightLabel}"
+          options={rightDownloadOptions}
+          onDownload={name => onDownloadSide(rightState, name)}
+        />
+      </div>
     </div>
     <div class="st-typography-body flex-none text-muted-foreground">
       {#if !isLoading && !loadError}
