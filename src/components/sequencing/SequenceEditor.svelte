@@ -20,7 +20,6 @@
   import { clearWorkspaceAdaptationMessages } from '../../stores/workspaceErrors';
   import type { ActionDefinition } from '../../types/actions';
   import type { LintDiagnostic } from '../../types/console';
-  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { getLintDiagnostics } from '../../utilities/codemirror/lint';
@@ -30,9 +29,8 @@
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import {
     doesFilenameMatchExtension,
-    getVersionedFileName,
+    getDownloadOptionsForFile,
     replaceFileExtension,
-    separateFilenameFromExtension,
   } from '../../utilities/workspaces';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -303,31 +301,6 @@
     }
   }
 
-  /**
-   * The download name choices for the input file: its plain name, and (only once the file has at least one
-   * revision) its revision-versioned name. Disabled with an explanation when revisions exist but the
-   * working copy doesn't currently match one; omitted entirely when the file has no revisions yet.
-   */
-  function downloadOptionsFor(
-    name: string,
-    doesWorkingCopyMatchRevision: boolean,
-    revisionList: WorkspaceFileRevision[],
-  ): DownloadMenuOption[] {
-    const { extension } = separateFilenameFromExtension(name);
-    const options: DownloadMenuOption[] = [{ label: `Download (...${extension})`, name }];
-    if (revisionList.length > 0) {
-      const versionedFilename = revisionList[0].name ? getVersionedFileName(name, revisionList[0].name) : name;
-      const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
-      options.unshift({
-        disabled: !doesWorkingCopyMatchRevision,
-        disabledReason: doesWorkingCopyMatchRevision ? undefined : "The working copy doesn't match a revision.",
-        label: `Download with revision (...${versionedExtension})`,
-        name: versionedFilename,
-      });
-    }
-    return options;
-  }
-
   function downloadInputFormat(name: string): void {
     dispatch('downloadInput', { filePath: sequenceFilePath, filename: name });
   }
@@ -500,7 +473,11 @@
           showDownloadButton
           downloadDisabled={disableCopyAndExport}
           downloadLabel="Download sequence contents"
-          downloadOptions={downloadOptionsFor(sequenceName, doesWorkingCopyMatchRevision, revisionList)}
+          downloadOptions={getDownloadOptionsForFile(
+            sequenceName,
+            doesWorkingCopyMatchRevision,
+            revisionList[0]?.name ?? null,
+          )}
           onDownload={downloadInputFormat}
           showSaveButton={!(readOnly || previewOnly || isLoading)}
           saveDisabled={!isSequenceDefinitionUpdated}
@@ -531,14 +508,14 @@
               outputLanguages={sequenceAdaptation.outputs}
               outputDisabled={disableCopyAndExport}
               downloadOptions={selectedOutputFormat
-                ? downloadOptionsFor(
+                ? getDownloadOptionsForFile(
                     replaceFileExtension(
                       sequenceName,
                       sequenceAdaptation.input.fileExtension,
                       selectedOutputFormat.fileExtension,
                     ),
                     doesWorkingCopyMatchRevision,
-                    revisionList,
+                    revisionList[0]?.name ?? null,
                   )
                 : []}
               on:copyOutput={copyOutputFormatToClipboard}

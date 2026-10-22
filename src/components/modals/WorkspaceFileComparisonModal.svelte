@@ -6,12 +6,11 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import type { WorkspaceContentType } from '../../enums/workspace';
   import type { User } from '../../types/app';
-  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { WorkspaceFileRevision } from '../../types/workspace';
   import { downloadBlob } from '../../utilities/generic';
   import {
+    getDownloadOptionsForFile,
     getVersionedFileName,
-    separateFilenameFromExtension,
     separateFilenameFromPath,
     WorkspaceApi,
   } from '../../utilities/workspaces';
@@ -43,9 +42,18 @@
   const emptySideState: SideState = { content: '', error: false, loading: true, metadata: null };
 
   let changedLines: number = 0;
+  let isLoading: boolean;
+  let leftDownloadOptions: ReturnType<typeof getDownloadOptionsForFile>;
+  let leftFilename: string;
+  let leftLabel: string;
   let leftRevisions: WorkspaceFileRevision[] = [];
   let leftSide: Side = { kind: 'workingCopy' };
   let leftState: SideState = { ...emptySideState };
+  let loadError: boolean;
+  let metadataDiffers: boolean;
+  let rightDownloadOptions: ReturnType<typeof getDownloadOptionsForFile>;
+  let rightFilename: string;
+  let rightLabel: string;
   let rightRevisions: WorkspaceFileRevision[] = [];
   let rightSide: Side = { kind: 'workingCopy' };
   let rightState: SideState = { ...emptySideState };
@@ -58,28 +66,21 @@
     !isLoading && !loadError && canonical(leftState.metadata) !== canonical(rightState.metadata ?? {});
   $: leftLabel = sideLabel(leftFilename, leftSide);
   $: rightLabel = sideLabel(rightFilename, rightSide);
-  $: leftDownloadOptions = downloadOptionsFor(leftFilename, leftSide);
-  $: rightDownloadOptions = downloadOptionsFor(rightFilename, rightSide);
+  $: leftDownloadOptions = getDownloadOptionsForFile(
+    leftFilename,
+    leftSide.kind === 'revision',
+    leftSide.kind === 'revision' ? leftSide.revision.name : null,
+  );
+  $: rightDownloadOptions = getDownloadOptionsForFile(
+    rightFilename,
+    rightSide.kind === 'revision',
+    rightSide.kind === 'revision' ? rightSide.revision.name : null,
+  );
 
   function sideLabel(filename: string, side: Side): string {
     return side.kind === 'workingCopy'
       ? `${filename} (Working copy)`
       : getVersionedFileName(filename, side.revision.name);
-  }
-
-  /** The download name choices offered for a side: a revision also offers its versioned name. */
-  function downloadOptionsFor(filename: string, side: Side): DownloadMenuOption[] {
-    const { extension } = separateFilenameFromExtension(filename);
-    const options: DownloadMenuOption[] = [{ label: `Download (...${extension})`, name: filename }];
-    if (side.kind === 'revision') {
-      const versionedFilename = getVersionedFileName(filename, side.revision.name);
-      const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
-      options.unshift({
-        label: `Download with revision (...${versionedExtension})`,
-        name: versionedFilename,
-      });
-    }
-    return options;
   }
 
   function sideKey(side: Side): string {

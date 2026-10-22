@@ -3,23 +3,18 @@
 <script lang="ts">
   import { Button } from '@nasa-jpl/stellar-svelte';
   import { LoaderCircle } from 'lucide-svelte';
-  import { createEventDispatcher, getContext } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { activeDocument, activeDocumentIsDirty } from '../../stores/activeDocument';
   import { catchError } from '../../stores/console';
+  import { getUserStore } from '../../stores/user';
   import { workspaceId } from '../../stores/workspaces';
   import type { UserStore } from '../../types/app';
-  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { WorkspaceFileRevision } from '../../types/workspace';
   import { downloadBlob } from '../../utilities/generic';
   import { showWorkspaceRevisionPreviewModal } from '../../utilities/modal';
   import { CompoundError, WorkspaceSaveConflictError } from '../../utilities/requests';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
-  import {
-    WorkspaceApi,
-    getVersionedFileName,
-    separateFilenameFromExtension,
-    separateFilenameFromPath,
-  } from '../../utilities/workspaces';
+  import { WorkspaceApi, getDownloadOptionsForFile, separateFilenameFromPath } from '../../utilities/workspaces';
   import DownloadMenu from '../ui/DownloadMenu.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import * as Sidebar from '../ui/Sidebar/index.js';
@@ -38,7 +33,7 @@
   const dispatch = createEventDispatcher<{
     createdFileRevision: null;
   }>();
-  const user: UserStore = getContext('user');
+  const user: UserStore = getUserStore();
 
   let baseEtag: string | null = null;
   let commitMessage: string = '';
@@ -125,17 +120,6 @@
         workspaceId: $workspaceId,
       });
     }
-  }
-
-  /** The download name choices offered for a revision: its plain name, and its revision-versioned name. */
-  function downloadOptionsForRevision(revision: WorkspaceFileRevision): DownloadMenuOption[] {
-    const { extension: baseExtension } = separateFilenameFromExtension(baseFilename);
-    const versionedFilename = getVersionedFileName(baseFilename, revision.name);
-    const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
-    return [
-      { label: `Download with revision (...${versionedExtension})`, name: versionedFilename },
-      { label: `Download (...${baseExtension})`, name: baseFilename },
-    ];
   }
 
   /** Fetches a past revision's content and downloads it under the chosen name. */
@@ -280,7 +264,7 @@
                             variant="ghost"
                             className="flex-none px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                             label="Download revision {revision.name}"
-                            options={downloadOptionsForRevision(revision)}
+                            options={getDownloadOptionsForFile(baseFilename, true, revision.name)}
                             onDownload={name => onDownloadRevision(revision, name)}
                           />
                         </div>

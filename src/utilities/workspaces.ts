@@ -6,6 +6,7 @@ import { WorkspaceContentMode, WorkspaceContentType } from '../enums/workspace';
 import type { ActionDefinition } from '../types/actions';
 import type { User } from '../types/app';
 import type { LogMessage } from '../types/console';
+import type { DownloadMenuOption } from '../types/dropdown';
 import type {
   ActionParameterPair,
   Workspace,
@@ -786,10 +787,11 @@ export async function downloadWorkspaceNodesAsZip(options: {
   nodes: WorkspaceTreeNodeWithFullPath[];
   onError?: (message: string) => void;
   user: User | null;
+  withRevision?: boolean;
   workspaceId: number;
   workspaceName?: string;
 }): Promise<void> {
-  const { allFiles, nodes, onError, user, workspaceId, workspaceName } = options;
+  const { allFiles, nodes, onError, user, workspaceId, workspaceName, withRevision = true } = options;
 
   // Compute the minimal set of nodes to zip
   const minimalNodes = removeRedundantNodes(nodes);
@@ -821,6 +823,7 @@ export async function downloadWorkspaceNodesAsZip(options: {
 
   const fetchPromises = filesToZip.map(async filePath => {
     try {
+      const revisionName = withRevision ? await resolveDownloadRevisionName(workspaceId, filePath, user) : null;
       const blob = await WorkspaceApi.getFileContentBlob(workspaceId, filePath, user);
       if (blob) {
         // Strip common prefix to get relative path in zip, preserving folder structure
@@ -834,7 +837,7 @@ export async function downloadWorkspaceNodesAsZip(options: {
           // Fallback for edge cases
           relativePath = filePath;
         }
-        zip.file(relativePath, blob);
+        zip.file(getVersionedFileName(relativePath.split('/').pop() || 'download', revisionName), blob);
       } else {
         failedFiles++;
       }
@@ -880,6 +883,31 @@ export async function downloadWorkspaceNodesAsZip(options: {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(link.href);
+}
+
+/**
+ * The download name choices for the input file: its plain name, and (only once the file has at least one
+ * revision) its revision-versioned name. Disabled with an explanation when revisions exist but the
+ * working copy doesn't currently match one; omitted entirely when the file has no revisions yet.
+ */
+export function getDownloadOptionsForFile(
+  name: string,
+  doesWorkingCopyMatchRevision: boolean,
+  revisionName: string | null,
+): DownloadMenuOption[] {
+  const { extension } = separateFilenameFromExtension(name);
+  const options: DownloadMenuOption[] = [{ label: `Download (...${extension})`, name }];
+  if (revisionName !== null) {
+    const versionedFilename = revisionName ? getVersionedFileName(name, revisionName) : name;
+    const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
+    options.push({
+      disabled: !doesWorkingCopyMatchRevision,
+      disabledReason: doesWorkingCopyMatchRevision ? undefined : 'The working copy contains unrevisioned changes.',
+      label: `Download with revision (...${versionedExtension})`,
+      name: versionedFilename,
+    });
+  }
+  return options;
 }
 
 export const WorkspaceApi = {
@@ -1004,13 +1032,14 @@ export const WorkspaceApi = {
     workspaceId: number,
     filePath: string,
     user: User | null,
+    signal?: AbortSignal,
   ): Promise<WorkspaceFileRevisionList> {
     const { data } = await reqWorkspaceWithEtag<WorkspaceFileRevisionList>(
       `${joinPath([workspaceId, filePath])}`,
       'GET',
       null,
       user,
-      undefined,
+      signal,
       true,
       {},
       'versioning',

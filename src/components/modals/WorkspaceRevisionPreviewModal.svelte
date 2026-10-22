@@ -6,12 +6,11 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import type { WorkspaceContentType } from '../../enums/workspace';
   import type { User } from '../../types/app';
-  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { WorkspaceFileRevision } from '../../types/workspace';
   import { downloadBlob } from '../../utilities/generic';
   import {
+    getDownloadOptionsForFile,
     getVersionedFileName,
-    separateFilenameFromExtension,
     separateFilenameFromPath,
     WorkspaceApi,
   } from '../../utilities/workspaces';
@@ -54,13 +53,21 @@
 
   let changedLines: number = 0;
   let confirming: boolean = false;
+  let effectiveRestoreDisabledReason: string | null;
   let filename: string = '';
+  let isLoading: boolean;
   let isRestoring: boolean = false;
+  let leftDownloadOptions: ReturnType<typeof getDownloadOptionsForFile>;
+  let leftLabel: string;
   let leftSide: Side = { kind: 'workingCopy' };
   let leftState: SideState = { ...emptySideState };
-  /** The file's full revision history, used to populate both side pickers. */
+  let loadError: boolean;
+  let metadataDiffers: boolean;
   let revisions: WorkspaceFileRevision[] = [];
-  let rightSide: Side = { kind: 'revision', revision };
+  let revisionToRestore: WorkspaceFileRevision | null;
+  let rightDownloadOptions: ReturnType<typeof getDownloadOptionsForFile>;
+  let rightLabel: string;
+  let rightRevision: WorkspaceFileRevision = revision;
   let rightState: SideState = { ...emptySideState };
 
   $: ({ filename } = separateFilenameFromPath(filePath));
@@ -68,27 +75,19 @@
   $: loadError = leftState.error || rightState.error;
   $: metadataDiffers =
     !isLoading && !loadError && canonical(leftState.metadata) !== canonical(rightState.metadata ?? {});
-  // Exactly one side has to be the working copy for a restore to mean anything; otherwise there's nothing to
-  // replace (comparing two historical revisions) or nothing to restore from (comparing the working copy to itself).
-  $: workingCopySide =
-    (leftSide.kind === 'workingCopy') !== (rightSide.kind === 'workingCopy')
-      ? leftSide.kind === 'workingCopy'
-        ? 'left'
-        : 'right'
-      : null;
-  $: revisionToRestore =
-    workingCopySide === 'left' && rightSide.kind === 'revision'
-      ? rightSide.revision
-      : workingCopySide === 'right' && leftSide.kind === 'revision'
-        ? leftSide.revision
-        : null;
+  $: revisionToRestore = leftSide.kind === 'workingCopy' ? rightRevision : null;
   $: effectiveRestoreDisabledReason =
     restoreDisabledReason ??
     (!revisionToRestore ? 'Restoring is only available when comparing against the working copy.' : null);
   $: leftLabel = sideLabel(leftSide);
-  $: rightLabel = sideLabel(rightSide);
-  $: leftDownloadOptions = downloadOptionsFor(leftSide);
-  $: rightDownloadOptions = downloadOptionsFor(rightSide);
+  $: rightRevision = revision;
+  $: rightLabel = getVersionedFileName(filename, rightRevision.name);
+  $: leftDownloadOptions = getDownloadOptionsForFile(
+    filename,
+    leftSide.kind === 'revision',
+    leftSide.kind === 'revision' ? leftSide.revision.name : null,
+  );
+  $: rightDownloadOptions = getDownloadOptionsForFile(filename, true, rightRevision.name);
 
   function sideLabel(side: Side): string {
     return side.kind === 'workingCopy'
@@ -105,21 +104,6 @@
     }
   }
 
-  /** The download name choices offered for a side: a revision also offers its versioned name. */
-  function downloadOptionsFor(side: Side): DownloadMenuOption[] {
-    const { extension } = separateFilenameFromExtension(filename);
-    const options = [{ label: `Download (...${extension})`, name: filename }];
-    if (side.kind === 'revision') {
-      const versionedFilename = getVersionedFileName(filename, side.revision.name);
-      const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
-      options.unshift({
-        label: `Download with revision (...${versionedExtension})`,
-        name: versionedFilename,
-      });
-    }
-    return options;
-  }
-
   function sideKey(side: Side): string {
     return side.kind === 'workingCopy' ? 'workingCopy' : side.revision.name;
   }
@@ -132,15 +116,11 @@
     return found ? { kind: 'revision', revision: found } : { kind: 'workingCopy' };
   }
 
-  async function loadSide(side: Side): Promise<SideState> {
+  async function loadRevisionState(rev: WorkspaceFileRevision): Promise<SideState> {
     try {
-      if (side.kind === 'workingCopy') {
-        const metadata = await WorkspaceApi.getFileMetadata(workspaceId, filePath, user);
-        return { content: currentContent, error: false, loading: false, metadata };
-      }
       const [content, { metadata }] = await Promise.all([
-        WorkspaceApi.getFileRevisionContent(workspaceId, filePath, side.revision.name, user),
-        WorkspaceApi.getFileRevision(workspaceId, filePath, side.revision.name, user),
+        WorkspaceApi.getFileRevisionContent(workspaceId, filePath, rev.name, user),
+        WorkspaceApi.getFileRevision(workspaceId, filePath, rev.name, user),
       ]);
       return { content, error: false, loading: false, metadata };
     } catch {
@@ -148,16 +128,22 @@
     }
   }
 
+  async function loadSide(side: Side): Promise<SideState> {
+    if (side.kind === 'workingCopy') {
+      try {
+        const metadata = await WorkspaceApi.getFileMetadata(workspaceId, filePath, user);
+        return { content: currentContent, error: false, loading: false, metadata };
+      } catch {
+        return { content: '', error: true, loading: false, metadata: null };
+      }
+    }
+    return loadRevisionState(side.revision);
+  }
+
   async function selectLeft(side: Side) {
     leftSide = side;
     leftState = { ...emptySideState };
     leftState = await loadSide(side);
-  }
-
-  async function selectRight(side: Side) {
-    rightSide = side;
-    rightState = { ...emptySideState };
-    rightState = await loadSide(side);
   }
 
   function canonical(value: unknown, top = true): string {
@@ -212,7 +198,7 @@
   onMount(async () => {
     revisions = await loadRevisionsFor(filePath);
     selectLeft(leftSide);
-    selectRight(rightSide);
+    rightState = await loadRevisionState(rightRevision);
   });
 </script>
 

@@ -19,7 +19,7 @@
   import { capitalize, startCase } from 'lodash-es';
   import { Folder, ListX, LoaderCircle, TriangleAlert } from 'lucide-svelte';
   import type { PaneAPI } from 'paneforge';
-  import { getContext, onDestroy, onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import Console from '../../../components/console/Console.svelte';
   import ConsoleTab from '../../../components/console/ConsoleTab.svelte';
@@ -55,7 +55,7 @@
     parameterDictionaries as parameterDictionariesStore,
     parcelToParameterDictionaries,
   } from '../../../stores/sequencing';
-  import { initialUsersLoading, users } from '../../../stores/user';
+  import { getUserStore, initialUsersLoading, users } from '../../../stores/user';
   import {
     addWorkspaceAdaptationError,
     addWorkspaceAdaptationLog,
@@ -156,7 +156,7 @@
 
   const { initialWorkspace } = data;
   const actionRunsLoading = actionRuns.loading;
-  const user: UserStore = getContext('user');
+  const user: UserStore = getUserStore();
   const defaultLogLevels: LogLevel[] = ['error', 'warn', 'info'];
   const PANEL_DEFAULT_SIZE = 25;
   const PANEL_MIN_SIZE = 10;
@@ -197,6 +197,7 @@
   let previousTerminalActionRunCount: number = -1;
   let refreshInterval: NodeJS.Timeout | null = null;
   let revisionList: WorkspaceFileRevision[] = [];
+  let revisionLoadingAbortController: AbortController | null = null;
   let rightPaneApi: PaneAPI;
   let rightPanelActiveTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
   let rightPanelCommandNodeName: string | null = null;
@@ -326,9 +327,6 @@
   ) {
     loadRevisions(selectedFilePath);
   }
-
-  $: console.log('activeDocumentPath', $activeDocumentPath);
-  $: console.log('selectedFilePath', selectedFilePath);
 
   $: if ($parcel) {
     loadSequenceAdaptation($parcel.sequence_adaptation_id);
@@ -485,49 +483,6 @@
       }
     }
   }
-
-  onMount(() => {
-    lastKnownUrl = window.location.href;
-
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if ($activeDocumentIsDirty) {
-        event.preventDefault(); // Triggers the native browser confirmation
-        event.returnValue = ''; // Required for some older browser compatibility
-      }
-    };
-
-    // Browser back/forward inside the workspace. SvelteKit's lifecycle hooks don't
-    // fire reliably for shallow pushState entries, so we handle these directly.
-    // Cross-route popstates (back/forward out of this workspace) are handled by
-    // beforeNavigate above — we early-return here to avoid stacking two modals.
-    const handlePopstate = () => {
-      const newUrl = window.location.href;
-      const expectedPathname = `${base}/workspaces/${$workspaceId}`;
-      if (new URL(newUrl).pathname !== expectedPathname) {
-        return;
-      }
-      const previousUrl = lastKnownUrl;
-
-      confirmNavigateAway().then(confirmed => {
-        if (confirmed) {
-          syncStateFromUrl(new URL(newUrl));
-          lastKnownUrl = newUrl;
-        } else {
-          // Roll back the URL change so the user stays on the dirty page.
-          window.history.pushState({}, '', previousUrl);
-          lastKnownUrl = previousUrl;
-        }
-      });
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopstate);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopstate);
-    };
-  });
 
   async function maybeNavigate(nextPath: string | null) {
     // treat `null` as a navigable path so we can intentionally unload the editor file rather than skipping
@@ -778,11 +733,21 @@
     if (!path) {
       return;
     }
+    if (revisionLoadingAbortController) {
+      // abort any pending request to avoid race conditions
+      revisionLoadingAbortController.abort();
+    }
+    revisionLoadingAbortController = new AbortController();
     isRevisionsLoading = true;
     try {
-      const { matchingRevision, revisions } = await WorkspaceApi.getFileRevisionList($workspaceId, path, $user);
+      const { matchingRevision, revisions } = await WorkspaceApi.getFileRevisionList(
+        $workspaceId,
+        path,
+        $user,
+        revisionLoadingAbortController.signal,
+      );
       revisionList = revisions;
-      doesWorkingCopyMatchRevision = matchingRevision != null;
+      doesWorkingCopyMatchRevision = matchingRevision != null && matchingRevision === revisionList[0]?.name;
     } catch (e) {
       catchError('log', 'Failed to load revisions', e as Error);
     } finally {
@@ -982,7 +947,6 @@
 
   async function onDownloadFile(filePath: string, withRevision: boolean = true) {
     if ($workspace && $user) {
-      // TODO: Make this get the latest revision information also
       const blob = await effects.getWorkspaceFileContentBlob($workspace, filePath, $user);
       if (blob !== null) {
         const revisionName = withRevision ? await resolveDownloadRevisionName($workspace.id, filePath, $user) : null;
@@ -1061,6 +1025,7 @@
       nodes: treeNodes,
       onError: showFailureToast,
       user: $user,
+      withRevision,
       workspaceId: $workspaceId,
       workspaceName: $workspace?.name,
     });
@@ -1770,6 +1735,49 @@
       sequenceEditorRef.gotoLine(line, column);
     }
   }
+
+  onMount(() => {
+    lastKnownUrl = window.location.href;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if ($activeDocumentIsDirty) {
+        event.preventDefault(); // Triggers the native browser confirmation
+        event.returnValue = ''; // Required for some older browser compatibility
+      }
+    };
+
+    // Browser back/forward inside the workspace. SvelteKit's lifecycle hooks don't
+    // fire reliably for shallow pushState entries, so we handle these directly.
+    // Cross-route popstates (back/forward out of this workspace) are handled by
+    // beforeNavigate above — we early-return here to avoid stacking two modals.
+    const handlePopstate = () => {
+      const newUrl = window.location.href;
+      const expectedPathname = `${base}/workspaces/${$workspaceId}`;
+      if (new URL(newUrl).pathname !== expectedPathname) {
+        return;
+      }
+      const previousUrl = lastKnownUrl;
+
+      confirmNavigateAway().then(confirmed => {
+        if (confirmed) {
+          syncStateFromUrl(new URL(newUrl));
+          lastKnownUrl = newUrl;
+        } else {
+          // Roll back the URL change so the user stays on the dirty page.
+          window.history.pushState({}, '', previousUrl);
+          lastKnownUrl = previousUrl;
+        }
+      });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopstate);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopstate);
+    };
+  });
 
   onMount(async () => {
     if (initialWorkspace) {

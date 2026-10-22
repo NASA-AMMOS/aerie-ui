@@ -1,15 +1,20 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { ContextMenu } from '@nasa-jpl/stellar-svelte';
+  import { cn, ContextMenu } from '@nasa-jpl/stellar-svelte';
   import { createEventDispatcher } from 'svelte';
   import { WorkspaceContentType } from '../../enums/workspace';
+  import { getUserStore } from '../../stores/user';
+  import { workspaceId } from '../../stores/workspaces';
+  import type { UserStore } from '../../types/app';
+  import type { DownloadMenuOption } from '../../types/dropdown';
   import type { ActionParameterPair } from '../../types/workspace';
   import type { WorkspaceTreeNodeWithFullPath } from '../../types/workspace-tree-view';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { pluralize } from '../../utilities/text';
-  import { separateFilenameFromExtension } from '../../utilities/workspaces';
+  import { getDownloadOptionsForFile, WorkspaceApi } from '../../utilities/workspaces';
   import ActionMenuItem from '../ui/ActionMenuItem.svelte';
+  import Tooltip from '../ui/Tooltip.svelte';
 
   export let actionsForSelection: ActionParameterPair[] = [];
   export let hasEditPermission: boolean = false;
@@ -41,10 +46,13 @@
   const editPermissionError = 'You do not have permission to edit this workspace';
   const deletePermissionError = 'You do not have permission to delete files in this workspace';
   const readOnlyError = 'Some read-only files selected. You cannot modify read-only files.';
+  const user: UserStore = getUserStore();
 
   let areMultipleFilesSelected: boolean = false;
   let actionPhrase: string = '';
+  let canDownloadWithRevision: boolean = false;
   let deleteError: string = deletePermissionError;
+  let downloadOptions: DownloadMenuOption[] = [];
   let editError: string = editPermissionError;
   let selectedFolderCount: number = 0;
   let selectedFileCount: number = 0;
@@ -53,9 +61,14 @@
   /** A single, non-directory selection can offer a plain or revision-versioned download name. */
   $: canDownloadWithRevision =
     selectedWorkspaceNodes.length === 1 && selectedWorkspaceNodes[0].type !== WorkspaceContentType.Directory;
-  $: downloadExtension = canDownloadWithRevision
-    ? separateFilenameFromExtension(selectedWorkspaceNodes[0].name ?? '').extension
-    : 'seqN.txt';
+  $: if (selectedWorkspaceNodes.length > 1) {
+    downloadOptions = [
+      { label: 'Download files', name: '' },
+      { label: 'Download files with revision in filename (when possible)', name: '' },
+    ];
+  } else {
+    loadDownloadOptionsForFile();
+  }
 
   $: {
     selectedFolderCount = 0;
@@ -81,6 +94,31 @@
     // Set appropriate error message
     deleteError = hasReadOnlyNodes ? readOnlyError : deletePermissionError;
     editError = hasReadOnlyNodes ? readOnlyError : editPermissionError;
+  }
+
+  async function loadDownloadOptionsForFile() {
+    if (!canDownloadWithRevision) {
+      return;
+    }
+
+    const { matchingRevision, revisions } = await WorkspaceApi.getFileRevisionList(
+      $workspaceId,
+      selectedWorkspaceNodes[0].fullPath,
+      $user,
+    );
+
+    const latestRevision = revisions[0];
+    downloadOptions = getDownloadOptionsForFile(
+      selectedWorkspaceNodes[0].name ?? '',
+      matchingRevision === latestRevision?.name,
+      latestRevision?.name ?? null,
+    );
+  }
+
+  function onDownloadOptionClick(option: DownloadMenuOption, withRevision: boolean) {
+    if (!option.disabled) {
+      dispatch('download', { withRevision });
+    }
   }
 </script>
 
@@ -172,22 +210,25 @@
   <ContextMenu.Sub>
     <ContextMenu.SubTrigger size="sm">Download</ContextMenu.SubTrigger>
     <ContextMenu.SubContent>
-      <ContextMenu.Item
-        size="sm"
-        class="whitespace-nowrap"
-        on:click={() => dispatch('download', { withRevision: false })}
-        aria-label="Download File"
-      >
-        Download (...{downloadExtension})
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        size="sm"
-        class="whitespace-nowrap"
-        on:click={() => dispatch('download', { withRevision: true })}
-        aria-label="Download File with revision"
-      >
-        Download with revision (...a.{downloadExtension})
-      </ContextMenu.Item>
+      {#each downloadOptions as option, i (option.label)}
+        <Tooltip
+          content={option.disabledReason ?? ''}
+          disabled={!option.disabled || !option.disabledReason}
+          wrapperClass="w-full"
+        >
+          <ContextMenu.Item
+            size="sm"
+            class={cn(
+              'whitespace-nowrap',
+              option.disabled ? 'cursor-not-allowed text-muted-foreground opacity-50' : '',
+            )}
+            on:click={() => onDownloadOptionClick(option, i === 1)}
+            aria-label={i === 0 ? 'Download File' : 'Download File with revision'}
+          >
+            {option.label}
+          </ContextMenu.Item>
+        </Tooltip>
+      {/each}
     </ContextMenu.SubContent>
   </ContextMenu.Sub>
   {#if selectedWorkspaceNodes.length === 1}
