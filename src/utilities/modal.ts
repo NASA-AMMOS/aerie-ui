@@ -43,6 +43,7 @@ import UnsavedChangesModal from '../components/modals/UnsavedChangesModal.svelte
 import UpdatePlanMissionModelModal from '../components/modals/UpdatePlanMissionModelModal.svelte';
 import UploadViewModal from '../components/modals/UploadViewModal.svelte';
 import WorkspaceBulkOperationConflictModal from '../components/modals/WorkspaceBulkOperationConflictModal.svelte';
+import WorkspaceFileComparisonModal from '../components/modals/WorkspaceFileComparisonModal.svelte';
 import WorkspaceRevisionPreviewModal from '../components/modals/WorkspaceRevisionPreviewModal.svelte';
 import WorkspaceSaveConflictModal from '../components/modals/WorkspaceSaveConflictModal.svelte';
 import NewSequenceTemplateModal from '../components/sequence-templates/NewSequenceTemplateModal.svelte';
@@ -1830,7 +1831,6 @@ export async function showWorkspaceRevisionPreviewModal(props: {
   restore: (revision: WorkspaceFileRevision) => Promise<void>;
   restoreDisabledReason: string | null;
   revision: WorkspaceFileRevision;
-  revisions: WorkspaceFileRevision[];
   type: WorkspaceContentType | null;
   unrevisionedWarning: string | null;
   user: User | null;
@@ -1849,6 +1849,38 @@ export async function showWorkspaceRevisionPreviewModal(props: {
           target.resolve = null;
           resolve({ confirm: false });
           previewModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+/**
+ * Compares two different files, each with its own working-copy/revision picker. No restore: unlike
+ * {@link showWorkspaceRevisionPreviewModal}, there's no single working copy both sides could feed into.
+ */
+export async function showWorkspaceFileComparisonModal(props: {
+  leftFilePath: string;
+  rightFilePath: string;
+  type: WorkspaceContentType | null;
+  user: User | null;
+  workspaceId: number;
+}): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const comparisonModal = new WorkspaceFileComparisonModal({ props, target });
+        target.resolve = resolve;
+
+        comparisonModal.$on('close', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: false });
+          comparisonModal.$destroy();
         });
       }
     } else {

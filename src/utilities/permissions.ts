@@ -1365,11 +1365,11 @@ const workspacePermissions: Record<WorkspaceKeys, (user: User | null, ...args: a
   getFileRevisionContent: (user: User | null, workspace: Workspace): boolean => {
     return isUserAdmin(user) || getRoleWorkspacePermission(['read_file_directory'], user, workspace);
   },
+  getFileRevisionList: (user: User | null, workspace: Workspace): boolean => {
+    return isUserAdmin(user) || getRoleWorkspacePermission(['read_file_directory'], user, workspace);
+  },
   getWorkspaceContents: (user: User | null, workspace: Workspace): boolean => {
     return isUserAdmin(user) || getRoleWorkspacePermission(['list_workspace_contents'], user, workspace);
-  },
-  listFileRevisions: (user: User | null, workspace: Workspace): boolean => {
-    return isUserAdmin(user) || getRoleWorkspacePermission(['read_file_directory'], user, workspace);
   },
   moveFile: (user: User | null, workspace: Workspace): boolean => {
     return isUserAdmin(user) || getRoleWorkspacePermission(['write_file_directory'], user, workspace);

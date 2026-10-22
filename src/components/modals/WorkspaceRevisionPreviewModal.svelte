@@ -41,8 +41,6 @@
   export let restoreDisabledReason: string | null = null;
   /** The revision that was clicked to open this modal; preselected on the right. */
   export let revision: WorkspaceFileRevision;
-  /** The file's full revision history, used to populate both side pickers. */
-  export let revisions: WorkspaceFileRevision[] = [];
   export let type: WorkspaceContentType | null = null;
   /** Extra confirm-step warning, e.g. saved changes that no revision holds. */
   export let unrevisionedWarning: string | null = null;
@@ -54,14 +52,16 @@
   const unversionedKeys = ['lastEditedAt', 'lastEditedBy', 'readOnly'];
   const emptySideState: SideState = { content: '', error: false, loading: true, metadata: null };
 
-  let leftSide: Side = { kind: 'workingCopy' };
-  let rightSide: Side = { kind: 'revision', revision };
-  let leftState: SideState = { ...emptySideState };
-  let rightState: SideState = { ...emptySideState };
   let changedLines: number = 0;
   let confirming: boolean = false;
-  let isRestoring: boolean = false;
   let filename: string = '';
+  let isRestoring: boolean = false;
+  let leftSide: Side = { kind: 'workingCopy' };
+  let leftState: SideState = { ...emptySideState };
+  /** The file's full revision history, used to populate both side pickers. */
+  let revisions: WorkspaceFileRevision[] = [];
+  let rightSide: Side = { kind: 'revision', revision };
+  let rightState: SideState = { ...emptySideState };
 
   $: ({ filename } = separateFilenameFromPath(filePath));
   $: isLoading = leftState.loading || rightState.loading;
@@ -90,39 +90,45 @@
   $: leftDownloadOptions = downloadOptionsFor(leftSide);
   $: rightDownloadOptions = downloadOptionsFor(rightSide);
 
-  onMount(() => {
-    selectLeft(leftSide);
-    selectRight(rightSide);
-  });
-
   function sideLabel(side: Side): string {
     return side.kind === 'workingCopy'
       ? `${filename} (${currentLabel})`
       : getVersionedFileName(filename, side.revision.name);
   }
 
+  async function loadRevisionsFor(filePath: string): Promise<WorkspaceFileRevision[]> {
+    try {
+      const { revisions } = await WorkspaceApi.getFileRevisionList(workspaceId, filePath, user);
+      return revisions;
+    } catch {
+      return [];
+    }
+  }
+
   /** The download name choices offered for a side: a revision also offers its versioned name. */
   function downloadOptionsFor(side: Side): DownloadMenuOption[] {
     const { extension } = separateFilenameFromExtension(filename);
-    const options = [{ label: `Download (..${extension})`, name: filename }];
+    const options = [{ label: `Download (...${extension})`, name: filename }];
     if (side.kind === 'revision') {
+      const versionedFilename = getVersionedFileName(filename, side.revision.name);
+      const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
       options.unshift({
-        label: `Download with revision (..${extension})`,
-        name: getVersionedFileName(filename, side.revision.name),
+        label: `Download with revision (...${versionedExtension})`,
+        name: versionedFilename,
       });
     }
     return options;
   }
 
   function sideKey(side: Side): string {
-    return side.kind === 'workingCopy' ? 'workingCopy' : side.revision.id;
+    return side.kind === 'workingCopy' ? 'workingCopy' : side.revision.name;
   }
 
   function sideFromKey(key: string): Side {
     if (key === 'workingCopy') {
       return { kind: 'workingCopy' };
     }
-    const found = revisions.find(r => r.id === key);
+    const found = revisions.find(r => r.name === key);
     return found ? { kind: 'revision', revision: found } : { kind: 'workingCopy' };
   }
 
@@ -133,8 +139,8 @@
         return { content: currentContent, error: false, loading: false, metadata };
       }
       const [content, { metadata }] = await Promise.all([
-        WorkspaceApi.getFileRevisionContent(workspaceId, filePath, side.revision.id, user),
-        WorkspaceApi.getFileRevision(workspaceId, filePath, side.revision.id, user),
+        WorkspaceApi.getFileRevisionContent(workspaceId, filePath, side.revision.name, user),
+        WorkspaceApi.getFileRevision(workspaceId, filePath, side.revision.name, user),
       ]);
       return { content, error: false, loading: false, metadata };
     } catch {
@@ -202,6 +208,12 @@
     }
     downloadBlob(new Blob([state.content], { type: 'text/plain' }), name);
   }
+
+  onMount(async () => {
+    revisions = await loadRevisionsFor(filePath);
+    selectLeft(leftSide);
+    selectRight(rightSide);
+  });
 </script>
 
 <Modal height="min(680px, 85vh)" width="min(1200px, 92vw)" on:close={close}>
@@ -215,12 +227,13 @@
         on:change={e => selectLeft(sideFromKey(e.currentTarget.value))}
       >
         <option value="workingCopy">{currentLabel}</option>
-        {#each revisions as rev (rev.id)}
-          <option value={rev.id}>Revision {rev.name} · {formatDate(rev.createdAt)}</option>
+        {#each revisions as rev (rev.name)}
+          <option value={rev.name}>Revision {rev.name} · {formatDate(rev.createdAt)}</option>
         {/each}
       </select>
       <DownloadMenu
         align="start"
+        className="px-2"
         size="icon"
         disabled={leftState.loading || leftState.error}
         label="Download {leftLabel}"
@@ -231,6 +244,7 @@
       <span class="font-medium">{rightLabel}</span>
       <DownloadMenu
         align="start"
+        className="px-2"
         size="icon"
         disabled={rightState.loading || rightState.error}
         label="Download {rightLabel}"

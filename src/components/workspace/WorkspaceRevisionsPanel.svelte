@@ -3,13 +3,13 @@
 <script lang="ts">
   import { Button } from '@nasa-jpl/stellar-svelte';
   import { LoaderCircle } from 'lucide-svelte';
-  import { getContext } from 'svelte';
+  import { createEventDispatcher, getContext } from 'svelte';
   import { activeDocument, activeDocumentIsDirty } from '../../stores/activeDocument';
   import { catchError } from '../../stores/console';
   import { workspaceId } from '../../stores/workspaces';
   import type { UserStore } from '../../types/app';
   import type { DownloadMenuOption } from '../../types/dropdown';
-  import type { WorkspaceFileRevision, WorkspaceFileRevisionList } from '../../types/workspace';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import { downloadBlob } from '../../utilities/generic';
   import { showWorkspaceRevisionPreviewModal } from '../../utilities/modal';
   import { CompoundError, WorkspaceSaveConflictError } from '../../utilities/requests';
@@ -25,33 +25,32 @@
   import * as Sidebar from '../ui/Sidebar/index.js';
   import PanelHeader from './PanelHeader.svelte';
 
+  export let doesWorkingCopyMatchRevision: boolean = false;
   export let filePath: string | null = null;
   /** Write permission. Not the same as read-only: a read-only file can still get a revision. */
   export let hasEditPermission: boolean = false;
   export let isReadOnly: boolean = false;
+  export let isRevisionsLoading: boolean = false;
+  export let revisionList: WorkspaceFileRevision[] = [];
   /** Reload the editor from the server after a restore changed (or failed to change) the working copy. */
   export let reloadWorkingCopy: () => Promise<void>;
 
+  const dispatch = createEventDispatcher<{
+    createdFileRevision: null;
+  }>();
   const user: UserStore = getContext('user');
 
   let baseEtag: string | null = null;
   let commitMessage: string = '';
   let createDisabledReason: string | null = null;
   let isCreating: boolean = false;
-  let isLoading: boolean = false;
   let latest: WorkspaceFileRevision | null = null;
-  let list: WorkspaceFileRevisionList | null = null;
-  let loadedPath: string | null = null;
-  let matching: WorkspaceFileRevision | null = null;
-  let newestFirst: WorkspaceFileRevision[] = [];
   let notice: string | null = null;
-  let requestId: number = 0;
   let restoreDisabledReason: string | null = null;
   let revisionStart: string = 'a';
 
-  $: newestFirst = list ? [...list.revisions].reverse() : [];
-  $: latest = list?.latestRevision ?? null;
-  $: matching = list?.matchingRevision ?? null;
+  $: latest = revisionList[0] ?? null;
+
   $: baseFilename = filePath ? separateFilenameFromPath(filePath).filename : '';
 
   // Matching an older revision still allows a new one: returning to it is worth recording.
@@ -59,7 +58,7 @@
     ? "You don't have permission to create revisions."
     : $activeDocumentIsDirty
       ? 'Save your changes before creating a revision.'
-      : matching && matching.id === latest?.id
+      : doesWorkingCopyMatchRevision
         ? 'The saved copy already matches the latest revision.'
         : null;
   $: restoreDisabledReason = !hasEditPermission
@@ -74,34 +73,6 @@
   // switching back remounts this panel. readOnly is runtime state, not part of a revision, so it never reloads.
   // baseEtag is pulled out so keystrokes (which change $activeDocument) don't refetch.
   $: baseEtag = $activeDocument.baseEtag;
-  $: loadRevisions(filePath, baseEtag);
-
-  async function loadRevisions(path: string | null = filePath, ..._deps: unknown[]) {
-    const id = ++requestId;
-    if (path !== loadedPath) {
-      list = null;
-      notice = null;
-      loadedPath = path;
-    }
-    if (!path) {
-      return;
-    }
-    isLoading = true;
-    try {
-      const result = await WorkspaceApi.listFileRevisions($workspaceId, path, $user);
-      if (id === requestId) {
-        list = result;
-      }
-    } catch (e) {
-      if (id === requestId) {
-        catchError('log', 'Failed to load revisions', e as Error);
-      }
-    } finally {
-      if (id === requestId) {
-        isLoading = false;
-      }
-    }
-  }
 
   async function onCreate() {
     if (!filePath || createDisabledReason) {
@@ -113,7 +84,7 @@
       // TODO: add `revisionStart` parameter to `createFileRevision`
       const revision = await WorkspaceApi.createFileRevision($workspaceId, filePath, baseEtag, commitMessage, $user);
       commitMessage = '';
-      showSuccessToast(`Created revision ${revision.name}`);
+      showSuccessToast(`Created revision ${revision}`);
     } catch (e) {
       // The revision exists but the list can't show it yet; a retry would create the next one.
       if (
@@ -127,38 +98,43 @@
       }
     } finally {
       isCreating = false;
+      dispatch('createdFileRevision');
     }
-    await loadRevisions();
   }
 
   async function onPreview(revision: WorkspaceFileRevision) {
-    if (!filePath || !list) {
+    if (!filePath || !revisionList) {
       return;
     }
     const path = filePath;
-    const workingCopyETag = list.workingCopyETag;
-    await showWorkspaceRevisionPreviewModal({
-      currentContent: $activeDocument.currentContent,
-      currentLabel: $activeDocumentIsDirty ? 'Current editor (unsaved)' : 'Working copy',
-      filePath: path,
-      restore: revisionToRestore => restore(path, revisionToRestore, workingCopyETag),
-      restoreDisabledReason,
-      revision,
-      revisions: newestFirst,
-      type: $activeDocument.type,
-      unrevisionedWarning:
-        latest && !matching ? 'The saved copy is not in any revision, so it will be replaced and lost.' : null,
-      user: $user,
-      workspaceId: $workspaceId,
-    });
+    const workingCopyETag = $activeDocument.baseEtag;
+    if (workingCopyETag) {
+      await showWorkspaceRevisionPreviewModal({
+        currentContent: $activeDocument.currentContent,
+        currentLabel: $activeDocumentIsDirty ? 'Current editor (unsaved)' : 'Working copy',
+        filePath: path,
+        restore: revisionToRestore => restore(path, revisionToRestore, workingCopyETag),
+        restoreDisabledReason,
+        revision,
+        type: $activeDocument.type,
+        unrevisionedWarning:
+          latest && !doesWorkingCopyMatchRevision
+            ? 'The saved copy is not in any revision, so it will be replaced and lost.'
+            : null,
+        user: $user,
+        workspaceId: $workspaceId,
+      });
+    }
   }
 
   /** The download name choices offered for a revision: its plain name, and its revision-versioned name. */
   function downloadOptionsForRevision(revision: WorkspaceFileRevision): DownloadMenuOption[] {
-    const { extension } = separateFilenameFromExtension(baseFilename);
+    const { extension: baseExtension } = separateFilenameFromExtension(baseFilename);
+    const versionedFilename = getVersionedFileName(baseFilename, revision.name);
+    const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
     return [
-      { label: `Download with revision (..${extension})`, name: getVersionedFileName(baseFilename, revision.name) },
-      { label: `Download (..${extension})`, name: baseFilename },
+      { label: `Download with revision (...${versionedExtension})`, name: versionedFilename },
+      { label: `Download (...${baseExtension})`, name: baseFilename },
     ];
   }
 
@@ -168,7 +144,7 @@
       return;
     }
     try {
-      const content = await WorkspaceApi.getFileRevisionContent($workspaceId, filePath, revision.id, $user);
+      const content = await WorkspaceApi.getFileRevisionContent($workspaceId, filePath, revision.name, $user);
       downloadBlob(new Blob([content], { type: 'text/plain' }), name);
     } catch (e) {
       catchError('log', 'Failed to download revision', e as Error);
@@ -183,7 +159,7 @@
     }
     notice = null;
     try {
-      await WorkspaceApi.restoreFileRevision($workspaceId, path, revision.id, workingCopyETag, $user);
+      await WorkspaceApi.restoreFileRevision($workspaceId, path, revision.name, workingCopyETag, $user);
       showSuccessToast(`Restored revision ${revision.name}`);
     } catch (e) {
       if (e instanceof WorkspaceSaveConflictError) {
@@ -196,7 +172,6 @@
     }
     // Success or 412: the server state differs from what we showed, so reload the (clean) editor and this list.
     await reloadWorkingCopy();
-    await loadRevisions();
   }
 
   /** Grows a textarea's height to fit its content as the user types. */
@@ -228,7 +203,7 @@
   <Sidebar.Header className="p-0">
     <PanelHeader>
       <SectionTitle>Revisions</SectionTitle>
-      {#if isLoading}<LoaderCircle class="animate-spin text-muted-foreground" size={14} />{/if}
+      {#if isRevisionsLoading}<LoaderCircle class="animate-spin text-muted-foreground" size={14} />{/if}
     </PanelHeader>
   </Sidebar.Header>
   <Sidebar.Content className="h-full overflow-auto">
@@ -286,7 +261,7 @@
                 <span class="font-medium text-muted-foreground">History</span>
                 {#if latest}
                   <ul class="flex flex-col overflow-hidden rounded border border-border" aria-label="Revisions">
-                    {#each newestFirst as revision, i (revision.id)}
+                    {#each revisionList as revision, i (revision.name)}
                       <li class={i > 0 ? 'border-t border-border' : ''}>
                         <div class="flex items-stretch">
                           <button

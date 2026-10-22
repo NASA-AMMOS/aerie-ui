@@ -13,6 +13,7 @@
   } from '@nasa-jpl/plandev-sequence-languages';
   import { EditorView } from 'codemirror';
   import { WorkspaceRightPanelTab } from '../../enums/workspace';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { unquoteUnescape } from '../../utilities/sequence-editor/sequence-utils';
   import CommandDictionaryComponent from '../sequencing/CommandPanel/CommandDictionary.svelte';
@@ -25,14 +26,17 @@
   import WorkspaceRevisionsPanel from './WorkspaceRevisionsPanel.svelte';
 
   export let activeTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
-  export let commandNodeName: string | null = null;
-  export let editorSequenceView: EditorView | null = null;
   export let commandInfoMapper: CommandInfoMapper | null = null;
-  export let filePath: string | null = null;
+  export let commandNodeName: string | null = null;
+  export let doesWorkingCopyMatchRevision: boolean = false;
+  export let editorSequenceView: EditorView | null = null;
   export let fileMetadata: WorkspaceFileMetadata | null = null;
+  export let filePath: string | null = null;
   export let hasEditPermission: boolean = false;
+  export let isRevisionsLoading: boolean = false;
   export let isSequenceFile: boolean = false;
   export let phoenixContext: PhoenixContext;
+  export let revisionList: WorkspaceFileRevision[] = [];
   export let reloadWorkingCopy: () => Promise<void>;
 
   const emptyCommandDictionary: CommandDictionary = {
@@ -203,6 +207,15 @@
   {:else if activeTab === WorkspaceRightPanelTab.METADATA}
     <WorkspaceMetadataPanel {filePath} {fileMetadata} {hasEditPermission} on:updateUserMetadata />
   {:else if activeTab === WorkspaceRightPanelTab.REVISIONS}
-    <WorkspaceRevisionsPanel {filePath} {hasEditPermission} isReadOnly={!!fileMetadata?.readOnly} {reloadWorkingCopy} />
+    <WorkspaceRevisionsPanel
+      {doesWorkingCopyMatchRevision}
+      {filePath}
+      {hasEditPermission}
+      isReadOnly={!!fileMetadata?.readOnly}
+      {isRevisionsLoading}
+      {revisionList}
+      {reloadWorkingCopy}
+      on:createdFileRevision
+    />
   {/if}
 </div>

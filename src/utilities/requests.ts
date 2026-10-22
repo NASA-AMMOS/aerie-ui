@@ -393,8 +393,7 @@ export async function reqWorkspaceWithEtag<T = any>(
   signal?: AbortSignal,
   asJson?: boolean,
   headerOverrides?: HeadersInit,
-  // root?: 'ws' | 'versioning',
-  root?: 'ws' | 'revision' | 'revisions',
+  root?: 'ws' | 'versioning',
 ): Promise<WorkspaceResponseWithEtag<T>>;
 export async function reqWorkspaceWithEtag<T = any>(
   url: string,
@@ -405,8 +404,7 @@ export async function reqWorkspaceWithEtag<T = any>(
   signal?: AbortSignal,
   asJson?: boolean,
   headerOverrides?: HeadersInit,
-  // root?: 'ws' | 'versioning',
-  root?: 'ws' | 'revision' | 'revisions',
+  root?: 'ws' | 'versioning',
 ): Promise<WorkspaceResponseWithEtag<T>>;
 export async function reqWorkspaceWithEtag<T = any>(
   url: string,
@@ -421,7 +419,7 @@ export async function reqWorkspaceWithEtag<T = any>(
         signal?: AbortSignal,
         asJson?: boolean,
         headerOverrides?: HeadersInit,
-        root?: 'ws' | 'revision' | 'revisions',
+        root?: 'ws' | 'versioning',
       ]
     | [
         ifMatch: string | '*' | null,
@@ -429,7 +427,7 @@ export async function reqWorkspaceWithEtag<T = any>(
         signal?: AbortSignal,
         asJson?: boolean,
         headerOverrides?: HeadersInit,
-        root?: 'ws' | 'revision' | 'revisions',
+        root?: 'ws' | 'versioning',
       ]
 ): Promise<WorkspaceResponseWithEtag<T>> {
   // Normalize both call shapes into one set of named variables: for GET, there's no `ifMatch` arg in
@@ -444,7 +442,7 @@ export async function reqWorkspaceWithEtag<T = any>(
           AbortSignal | undefined,
           boolean | undefined,
           HeadersInit | undefined,
-          ('ws' | 'revision' | 'revisions') | undefined,
+          'ws' | 'versioning' | undefined,
         ])
       : (rest as [
           string | '*' | null,
@@ -452,7 +450,7 @@ export async function reqWorkspaceWithEtag<T = any>(
           AbortSignal | undefined,
           boolean | undefined,
           HeadersInit | undefined,
-          ('ws' | 'revision' | 'revisions') | undefined,
+          'ws' | 'versioning' | undefined,
         ]);
 
   const WORKSPACE_URL = env.PUBLIC_WORKSPACE_CLIENT_URL;

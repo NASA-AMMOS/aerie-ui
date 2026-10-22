@@ -12,23 +12,28 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import type { ActionDefinition } from '../../types/actions';
   import type { LintDiagnostic } from '../../types/console';
+  import type { DownloadMenuOption } from '../../types/dropdown';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { getLintDiagnostics } from '../../utilities/codemirror/lint';
   import { readOnlyChangeGuard } from '../../utilities/codemirror/readOnly';
   import { blockTheme } from '../../utilities/codemirror/themes/block';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
+  import { getVersionedFileName, separateFilenameFromExtension } from '../../utilities/workspaces';
   import EditorToolbar from '../sequencing/EditorToolbar.svelte';
   import FileMetadataBanner from '../workspace/FileMetadataBanner.svelte';
   import Panel from './Panel.svelte';
   import SectionTitle from './SectionTitle.svelte';
 
   export let availableActions: { action: ActionDefinition; parameter: string }[] = [];
+  export let doesWorkingCopyMatchRevision: boolean = false;
   export let fileMetadata: WorkspaceFileMetadata | null = null;
   export let includeActions: boolean = false;
   export let isJSON: boolean = false;
   export let isLoading: boolean = false;
   export let previewOnly: boolean = false;
   export let readOnly: boolean = false;
+  export let revisionList: WorkspaceFileRevision[] = [];
   export let shouldListenForKeyboardSave: boolean = true;
   export let textFileContent: string = '';
   export let textFilePath: string = '';
@@ -193,6 +198,31 @@
     }
   }
 
+  /**
+   * The download name choices for the input file: its plain name, and (only once the file has at least one
+   * revision) its revision-versioned name. Disabled with an explanation when revisions exist but the
+   * working copy doesn't currently match one; omitted entirely when the file has no revisions yet.
+   */
+  function downloadOptionsFor(
+    name: string,
+    doesWorkingCopyMatchRevision: boolean,
+    revisionList: WorkspaceFileRevision[],
+  ): DownloadMenuOption[] {
+    const { extension } = separateFilenameFromExtension(name);
+    const options: DownloadMenuOption[] = [{ label: `Download (...${extension})`, name }];
+    if (revisionList.length > 0) {
+      const versionedFilename = revisionList[0].name ? getVersionedFileName(name, revisionList[0].name) : name;
+      const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
+      options.unshift({
+        disabled: !doesWorkingCopyMatchRevision,
+        disabledReason: doesWorkingCopyMatchRevision ? undefined : "The working copy doesn't match a revision.",
+        label: `Download with revision (...${versionedExtension})`,
+        name: versionedFilename,
+      });
+    }
+    return options;
+  }
+
   function onSave(): boolean {
     const currentText = editorView.state.doc.toString();
     if (currentText !== textFileContent) {
@@ -253,7 +283,7 @@
       showDownloadButton
       downloadDisabled={disableCopyAndExport}
       downloadLabel="Download"
-      downloadOptions={[{ label: 'Download', name: textFileName }]}
+      downloadOptions={downloadOptionsFor(textFileName, doesWorkingCopyMatchRevision, revisionList)}
       onDownload={downloadInputFormat}
       showSaveButton={!(readOnly || previewOnly || isLoading)}
       saveDisabled={!isTextContentUpdated}

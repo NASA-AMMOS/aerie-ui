@@ -30,7 +30,7 @@ describe('WorkspaceApi file revisions', () => {
     vi.unstubAllGlobals();
   });
 
-  test('listFileRevisions GETs /versioning/{workspaceId}/{path} and returns the parsed list', async () => {
+  test('getFileRevisionList GETs /versioning/{workspaceId}/{path} and returns the parsed list', async () => {
     const list = {
       fileId: 'f-1',
       latestRevision: revision,
@@ -40,7 +40,7 @@ describe('WorkspaceApi file revisions', () => {
     };
     const fetchMock = stubFetch(200, list);
 
-    await expect(WorkspaceApi.listFileRevisions(3, 'foo/bar.seq', null)).resolves.toEqual(list);
+    await expect(WorkspaceApi.getFileRevisionList(3, 'foo/bar.seq', null)).resolves.toEqual(list);
     expect(fetchMock).toHaveBeenCalledWith(
       'http://ws/versioning/3/foo/bar.seq',
       expect.objectContaining({ method: 'GET' }),

@@ -93,6 +93,7 @@
     ActionParameterPair,
     Workspace,
     WorkspaceCollaborator,
+    WorkspaceFileRevision,
     WorkspaceMetadata,
     WorkspaceNodeEvent,
     WorkspaceNodeRunActionEvent,
@@ -114,6 +115,8 @@
     showConfirmModal,
     showRunActionResultsModal,
     showUnsavedChangesModal,
+    showWorkspaceFileComparisonModal,
+    showWorkspaceRevisionPreviewModal,
     showWorkspaceSaveConflictModal,
   } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
@@ -160,55 +163,56 @@
   const resizableHandleClass =
     'w-[3px] hover:after:bg-neutral-300 hover:after:transition-all hover:after:delay-[400ms] data-[active]:after:bg-neutral-300 data-[active]:after:transition-all';
 
+  let activeEditorView: EditorView | null = null;
   let activeFileIsInputSequence: boolean = false;
-  let activeFileHasRevisions: boolean = false;
-  let activeFileMetadata: WorkspaceFileMetadata | null = null;
-  let activeFileRevisionName: string | null = null;
   let activeFileIsSequence: boolean = false;
-  let availableActionsForActiveFile: ActionParameterPair[] = [];
-  let panelsReady: boolean = false;
+  let activeFileMetadata: WorkspaceFileMetadata | null = null;
   let allActionsForWorkspace: ActionDefinition[] = [];
+  let availableActionsForActiveFile: ActionParameterPair[] = [];
   let channelDictionary: ChannelDictionary | null = null;
   let commandDictionary: CommandDictionary | null = null;
   let commandInfoMapper: CommandInfoMapper | null = null;
   let consolePaneApi: PaneAPI;
-  let leftPaneApi: PaneAPI;
-  let leftPanelActiveTab: string = initialUrlState.sidebarTab;
-  let rightPaneApi: PaneAPI;
-  let rightPanelActiveTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
-  let rightPanelCommandNodeName: string | null = null;
+  let doesWorkingCopyMatchRevision: boolean = false;
   let hasEditFilePermission: boolean = false;
-  let hasEditWorkspacePermission: boolean = false;
   let hasEditWorkspaceCollaboratorsPermission: boolean = false;
+  let hasEditWorkspacePermission: boolean = false;
   let hasRunActionPermission: boolean = false;
   let isConsoleExpanded: boolean = false;
   let isFileReadOnly: boolean = false;
-  let parameterDictionaries: ParameterDictionary[] = [];
-  let phoenixContext: PhoenixContext;
+  let isHandlingPopstate: boolean = false;
+  let isRevisionsLoading: boolean = false;
   let isWorkspaceLoading: boolean = false;
-  let refreshInterval: NodeJS.Timeout | null = null;
-  let sidebarBreadcrumbPath: string = '';
-  let selectedFilePath: string | null = null;
-  let selectedSequenceOutput: string | undefined = undefined;
-  let rightPanelOpen: boolean = true;
-  let sidebarPanelOpen: boolean = true;
-  let selectedConsoleTab: WorkspaceConsoleTab = 'actions';
-  let activeEditorView: EditorView | null = null;
-  let sequenceEditorRef: SequenceEditor;
-  let textEditorRef: TextEditor;
-  let showLoadingSpinner: boolean = false;
+  let lastKnownUrl: string = '';
+  let leftPaneApi: PaneAPI;
+  let leftPanelActiveTab: string = initialUrlState.sidebarTab;
   let librarySequences: LibrarySequenceSignature[] = [];
   let loadingSpinnerTimeout: ReturnType<typeof setTimeout> | null = null;
   let logLevelLabel: string = 'Default levels';
   let logLevels: LogLevel[] = defaultLogLevels;
+  let panelsReady: boolean = false;
+  let parameterDictionaries: ParameterDictionary[] = [];
+  let phoenixContext: PhoenixContext;
   let preserveAdaptationLog: boolean = false;
   let previousTerminalActionRunCount: number = -1;
+  let refreshInterval: NodeJS.Timeout | null = null;
+  let revisionList: WorkspaceFileRevision[] = [];
+  let rightPaneApi: PaneAPI;
+  let rightPanelActiveTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
+  let rightPanelCommandNodeName: string | null = null;
+  let rightPanelOpen: boolean = true;
+  let selectedConsoleTab: WorkspaceConsoleTab = 'actions';
+  let selectedFilePath: string | null = null;
+  let selectedSequenceOutput: string | undefined = undefined;
+  let sequenceEditorRef: SequenceEditor;
+  let showLoadingSpinner: boolean = false;
+  let sidebarBreadcrumbPath: string = '';
+  let sidebarPanelOpen: boolean = true;
+  let textEditorRef: TextEditor;
+  let workspaceFileList: WorkspaceTreeNodeWithFullPath[] = [];
   let workspaceSequences: UserSequence[] = [];
   let workspaceTree: WorkspaceTreeNode | null = null;
   let workspaceTreeMap: WorkspaceTreeMap = {};
-  let workspaceFileList: WorkspaceTreeNodeWithFullPath[] = [];
-  let isHandlingPopstate: boolean = false;
-  let lastKnownUrl: string = '';
 
   // Programmatic collapse/expand of left sidebar content pane
   $: if (leftPaneApi) {
@@ -287,8 +291,7 @@
   }
 
   $: activeFileMetadata = ($activeDocumentPath && workspaceTreeMap[$activeDocumentPath]?.metadata) || null;
-  // Prefetched (not resolved at download time) so the download dropdown's options are known up front.
-  $: loadActiveFileRevisionName($activeDocumentPath, $activeDocument.baseEtag);
+
   $: activeFileIsSequence =
     $activeDocumentPath === null ||
     ($activeDocument.type !== null && $activeDocument.type === WorkspaceContentType.Sequence);
@@ -316,6 +319,16 @@
       rightPanelActiveTab = WorkspaceRightPanelTab.COMMAND;
     }
   }
+
+  $: if (
+    !selectedFilePath ||
+    (workspaceTreeMap[selectedFilePath] && workspaceTreeMap[selectedFilePath]?.type !== WorkspaceContentType.Directory)
+  ) {
+    loadRevisions(selectedFilePath);
+  }
+
+  $: console.log('activeDocumentPath', $activeDocumentPath);
+  $: console.log('selectedFilePath', selectedFilePath);
 
   $: if ($parcel) {
     loadSequenceAdaptation($parcel.sequence_adaptation_id);
@@ -758,6 +771,25 @@
     ).filter(filterEmpty);
   }
 
+  async function loadRevisions(path: string | null) {
+    if (path !== selectedFilePath || !path) {
+      revisionList = [];
+    }
+    if (!path) {
+      return;
+    }
+    isRevisionsLoading = true;
+    try {
+      const { matchingRevision, revisions } = await WorkspaceApi.getFileRevisionList($workspaceId, path, $user);
+      revisionList = revisions;
+      doesWorkingCopyMatchRevision = matchingRevision != null;
+    } catch (e) {
+      catchError('log', 'Failed to load revisions', e as Error);
+    } finally {
+      isRevisionsLoading = false;
+    }
+  }
+
   function resetSequenceAdaptation(): void {
     setSequenceLanguages(undefined);
   }
@@ -884,6 +916,8 @@
     if (!confirm) {
       return false;
     }
+    // Prefetched (not resolved at download time) so the download dropdown's options are known up front.
+    await loadRevisions($activeDocumentPath);
 
     // Save the file before the operation
     const path = $activeDocumentPath!;
@@ -946,31 +980,14 @@
     }
   }
 
-  async function onDownloadFile(filePath: string) {
+  async function onDownloadFile(filePath: string, withRevision: boolean = true) {
     if ($workspace && $user) {
+      // TODO: Make this get the latest revision information also
       const blob = await effects.getWorkspaceFileContentBlob($workspace, filePath, $user);
       if (blob !== null) {
-        const revisionName = await resolveDownloadRevisionName($workspace.id, filePath, $user);
+        const revisionName = withRevision ? await resolveDownloadRevisionName($workspace.id, filePath, $user) : null;
         downloadBlob(blob, getVersionedFileName(filePath.split('/').pop() || 'download', revisionName));
       }
-    }
-  }
-
-  /** The active file's revision state, kept current so the editor's download dropdown can offer both naming
-   * conventions (and know whether to offer the versioned one at all) without resolving on every click. */
-  async function loadActiveFileRevisionName(path: string | null, _baseEtag: string | null) {
-    if (!path || !$workspace) {
-      activeFileHasRevisions = false;
-      activeFileRevisionName = null;
-      return;
-    }
-    try {
-      const list = await WorkspaceApi.listFileRevisions($workspace.id, path, $user);
-      activeFileHasRevisions = list.latestRevision !== null;
-      activeFileRevisionName = list.matchingRevision?.name ?? null;
-    } catch {
-      activeFileHasRevisions = false;
-      activeFileRevisionName = null;
     }
   }
 
@@ -1022,7 +1039,7 @@
     }
   }
 
-  async function onDownloadNodes({ detail: { treeNodes } }: CustomEvent<WorkspaceNodesEvent>) {
+  async function onDownloadNodes({ detail: { treeNodes, withRevision = true } }: CustomEvent<WorkspaceNodesEvent>) {
     // Prompt user to save their active file if it is found within treeNodes
     const containsActiveNode = findNodeAffectingPath(treeNodes, $activeDocumentPath);
 
@@ -1035,7 +1052,7 @@
 
     // Download if just a single file
     if (treeNodes.length === 1 && treeNodes[0].type !== WorkspaceContentType.Directory) {
-      onDownloadFile(treeNodes[0].fullPath);
+      onDownloadFile(treeNodes[0].fullPath, withRevision);
       return;
     }
 
@@ -1046,6 +1063,83 @@
       user: $user,
       workspaceId: $workspaceId,
       workspaceName: $workspace?.name,
+    });
+  }
+
+  /** Restores an arbitrary (not necessarily active) file's revision, from the "Compare revisions" context menu. */
+  async function restoreArbitraryFileRevision(path: string, revision: WorkspaceFileRevision, workingCopyETag: string) {
+    if (!$workspace) {
+      return;
+    }
+    try {
+      await WorkspaceApi.restoreFileRevision($workspace.id, path, revision.name, workingCopyETag, $user);
+      showSuccessToast(`Restored revision ${revision.name}`);
+    } catch (e) {
+      if (e instanceof WorkspaceSaveConflictError) {
+        showFailureToast('The working copy changed since this list loaded; try again.');
+      } else {
+        catchError('log', 'Failed to restore revision', e as Error);
+        showFailureToast('Failed to restore revision');
+      }
+      return;
+    }
+    // Reload the editor only if the restored file happens to be the one currently open.
+    if (path === $activeDocumentPath) {
+      await onRevisionWorkingCopyChanged();
+    } else {
+      refreshWorkspaceContents();
+    }
+  }
+
+  async function onCompareRevisions({ detail: { treeNode, treeNodePath: path } }: CustomEvent<WorkspaceNodeEvent>) {
+    if (!$workspace) {
+      return;
+    }
+    try {
+      const { matchingRevision, revisions } = await WorkspaceApi.getFileRevisionList($workspace.id, path, $user);
+      if (revisions.length === 0) {
+        showFailureToast('This file has no revisions yet.');
+        return;
+      }
+      const { content, etag } = await WorkspaceApi.getFileContent($workspace.id, path, $user);
+      const isReadOnly = workspaceTreeMap[path]?.metadata?.readOnly ?? false;
+      if (etag) {
+        await showWorkspaceRevisionPreviewModal({
+          currentContent: content,
+          currentLabel: 'Working copy',
+          filePath: path,
+          restore: revisionToRestore => restoreArbitraryFileRevision(path, revisionToRestore, etag),
+          restoreDisabledReason: isReadOnly
+            ? 'This file is read-only, so revisions can be previewed but not restored.'
+            : !hasEditWorkspacePermission
+              ? "You don't have permission to restore revisions."
+              : null,
+          revision: revisions[0],
+          type: treeNode.type,
+          unrevisionedWarning:
+            revisions[0] && !matchingRevision
+              ? 'The saved copy is not in any revision, so it will be replaced and lost.'
+              : null,
+          user: $user,
+          workspaceId: $workspace.id,
+        });
+      }
+    } catch (e) {
+      catchError('log', 'Failed to load revisions', e as Error);
+      showFailureToast('Failed to load revisions');
+    }
+  }
+
+  async function onCompareFiles({ detail: { treeNodes } }: CustomEvent<WorkspaceNodesEvent>) {
+    if (!$workspace || treeNodes.length !== 2) {
+      return;
+    }
+    await showWorkspaceFileComparisonModal({
+      leftFilePath: treeNodes[0].fullPath,
+      rightFilePath: treeNodes[1].fullPath,
+      type: treeNodes[0].type,
+      user: $user,
+      workspaceId: $workspace.id,
     });
   }
 
@@ -1569,6 +1663,11 @@
     }
   }
 
+  function onCreatedFileRevision() {
+    // Refresh the revision list
+    loadRevisions(selectedFilePath);
+  }
+
   function onOpenInNewTab({ detail: treeNodePath }: CustomEvent<string>) {
     window.open(`${base}/workspaces/${$workspaceId}?sequenceId=${encodeURIComponent(treeNodePath)}`, '_blank');
   }
@@ -1748,6 +1847,8 @@
             on:addCollaborator={onAddCollaborator}
             on:deleteCollaborator={onDeleteCollaborator}
             on:download={onDownloadNodes}
+            on:compareRevisions={onCompareRevisions}
+            on:compareFiles={onCompareFiles}
             on:deleteNodes={onDeleteNodes}
             on:moveNodes={onMoveNodes}
             on:renameNode={onRenameNode}
@@ -1814,12 +1915,12 @@
                     includeActions={hasRunActionPermission}
                     isLoading={$activeDocumentIsLoading}
                     isInputFile={activeFileIsInputSequence}
-                    hasRevisions={activeFileHasRevisions}
-                    matchingRevisionName={activeFileRevisionName}
+                    {doesWorkingCopyMatchRevision}
                     onReadOnlyChange={readOnly => onReadOnlyChange(readOnly)}
                     {preserveAdaptationLog}
                     previewOnly={!hasEditFilePermission}
                     readOnly={isFileReadOnly}
+                    {revisionList}
                     sequenceAdaptation={$sequenceAdaptation}
                     sequenceDefinition={$activeDocument.originalContent}
                     sequenceName={$activeDocument.fileName ?? ''}
@@ -1849,9 +1950,11 @@
                     includeActions={true}
                     isJSON={$activeDocument.type === WorkspaceContentType.Json}
                     isLoading={$activeDocumentIsLoading}
+                    {doesWorkingCopyMatchRevision}
                     onReadOnlyChange={readOnly => onReadOnlyChange(readOnly)}
                     previewOnly={!hasEditFilePermission}
                     readOnly={isFileReadOnly}
+                    {revisionList}
                     shouldListenForKeyboardSave={false}
                     textFileName={$activeDocument.fileName ?? ''}
                     textFilePath={$activeDocumentPath ?? ''}
@@ -1926,13 +2029,17 @@
             <WorkspaceRightPanel
               bind:activeTab={rightPanelActiveTab}
               bind:commandNodeName={rightPanelCommandNodeName}
+              {doesWorkingCopyMatchRevision}
               editorSequenceView={activeEditorView}
               filePath={$activeDocumentPath}
               fileMetadata={activeFileMetadata}
               hasEditPermission={hasEditFilePermission}
+              {isRevisionsLoading}
               isSequenceFile={activeFileIsInputSequence}
               {phoenixContext}
               {commandInfoMapper}
+              {revisionList}
+              on:createdFileRevision={onCreatedFileRevision}
               on:updateUserMetadata={onUpdateUserMetadata}
               reloadWorkingCopy={onRevisionWorkingCopyChanged}
             />

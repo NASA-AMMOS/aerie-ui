@@ -19,22 +19,23 @@ vi.mock('svelte', async importOriginal => {
 vi.mock('$env/dynamic/public', () => import.meta.env); // https://github.com/sveltejs/kit/issues/8180
 vi.mock('../../utilities/modal', () => ({ showWorkspaceRevisionPreviewModal: vi.fn().mockResolvedValue({}) }));
 
-const revision = (name: string, ordinal: number): WorkspaceFileRevision => ({
+const revision = (name: string): WorkspaceFileRevision => ({
   createdAt: '2026-10-07T10:42:00Z',
   createdBy: 'alice',
-  id: `r-${name}`,
+  lastEditedAt: null,
+  lastEditedBy: null,
+  message: '',
   name,
-  ordinal,
   pathAtRevision: 'a.seq',
 });
-const [a, b, c] = [revision('a', 1), revision('b', 2), revision('c', 3)];
+const [a, b, c] = [revision('a'), revision('b'), revision('c')];
 
-function list(matchingRevision: WorkspaceFileRevision | null): WorkspaceFileRevisionList {
-  return { fileId: 'f-1', latestRevision: c, matchingRevision, revisions: [a, b, c], workingCopyETag: '"wc"' };
+function list(matchingRevision: string | null): WorkspaceFileRevisionList {
+  return { matchingRevision, revisions: [c, b, a] };
 }
 
 function renderPanel(revisions: WorkspaceFileRevisionList) {
-  vi.spyOn(WorkspaceApi, 'listFileRevisions').mockResolvedValue(revisions);
+  vi.spyOn(WorkspaceApi, 'getFileRevisionList').mockResolvedValue(revisions);
   return render(WorkspaceRevisionsPanel, {
     props: { filePath: 'a.seq', hasEditPermission: true, reloadWorkingCopy: vi.fn() },
   });
@@ -52,7 +53,7 @@ describe('WorkspaceRevisionsPanel', () => {
   });
 
   it('says which revision the saved copy matches, alongside unsaved editor changes', async () => {
-    const { getByLabelText } = renderPanel(list(b));
+    const { getByLabelText } = renderPanel(list(b.name));
     const section = getByLabelText('Working copy');
     await waitFor(() => expect(section.textContent).toContain('Saved copy matches revision b'));
 
@@ -62,12 +63,12 @@ describe('WorkspaceRevisionsPanel', () => {
   });
 
   it('disables Create only when the saved copy matches the latest revision', async () => {
-    const latest = renderPanel(list(c));
+    const latest = renderPanel(list(c.name));
     await waitFor(() => expect(latest.getByText('The saved copy already matches the latest revision.')).toBeTruthy());
     expect((latest.getByRole('button', { name: 'Create revision' }) as HTMLButtonElement).disabled).toBe(true);
     cleanup();
 
-    const older = renderPanel(list(b));
+    const older = renderPanel(list(b.name));
     await waitFor(() => expect(older.getByLabelText('Working copy').textContent).toContain('matches revision b'));
     expect((older.getByRole('button', { name: 'Create revision' }) as HTMLButtonElement).disabled).toBe(false);
   });
@@ -77,7 +78,7 @@ describe('WorkspaceRevisionsPanel', () => {
       [b, false],
       [null, true],
     ] as const) {
-      const { getByTitle, getByLabelText } = renderPanel(list(matching));
+      const { getByTitle, getByLabelText } = renderPanel(list(matching?.name || null));
       await waitFor(() => expect(getByLabelText('Working copy').textContent).toContain(matching ? 'matches' : 'since'));
       await fireEvent.click(getByTitle('Preview revision a'));
       const props = vi.mocked(showWorkspaceRevisionPreviewModal).mock.lastCall?.[0];

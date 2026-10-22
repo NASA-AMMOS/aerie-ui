@@ -64,6 +64,8 @@
   type WorkspaceTreeNodeCellRendererParams = ICellRendererParams<WorkspaceTreeNodeWithFullPath> & CellRendererParams;
 
   const dispatch = createEventDispatcher<{
+    compareFiles: WorkspaceNodesEvent;
+    compareRevisions: WorkspaceNodeEvent;
     copyFileLocation: string;
     copyFullPath: string;
     deleteNodes: WorkspaceNodesEvent;
@@ -593,8 +595,16 @@
     dispatch('deleteNodes', { treeNodes: nodes });
   }
 
-  function onDownload(nodes: WorkspaceTreeNodeWithFullPath[]) {
-    dispatch('download', { treeNodes: nodes });
+  function onDownload(nodes: WorkspaceTreeNodeWithFullPath[], withRevision: boolean) {
+    dispatch('download', { treeNodes: nodes, withRevision });
+  }
+
+  function onCompareRevisions(node: WorkspaceTreeNodeWithFullPath) {
+    dispatch('compareRevisions', { treeNode: node, treeNodePath: node.fullPath });
+  }
+
+  function onCompareFiles(nodes: WorkspaceTreeNodeWithFullPath[]) {
+    dispatch('compareFiles', { treeNodes: nodes });
   }
 
   function onMoveNodes(nodes: WorkspaceTreeNodeWithFullPath[]) {
@@ -828,7 +838,9 @@
         on:rename={() => contextMenuNode && onRenameNode(contextMenuNode)}
         on:move={() => onMoveNodes(effectiveSelectedNodes)}
         on:delete={() => onDeleteNodes(effectiveSelectedNodes)}
-        on:download={() => onDownload(effectiveSelectedNodes)}
+        on:download={e => onDownload(effectiveSelectedNodes, e.detail.withRevision)}
+        on:compareRevisions={e => onCompareRevisions(e.detail)}
+        on:compareFiles={e => onCompareFiles(e.detail)}
         on:copyFileLocation={() => contextMenuNode && onCopyFileLocation(contextMenuNode)}
         on:copyFullPath={() => contextMenuNode && onCopyFullPath(contextMenuNode)}
         on:moveToWorkspace={() => onMoveNodesToWorkspace(effectiveSelectedNodes)}

@@ -8,6 +8,7 @@
   import type { WorkspaceTreeNodeWithFullPath } from '../../types/workspace-tree-view';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { pluralize } from '../../utilities/text';
+  import { separateFilenameFromExtension } from '../../utilities/workspaces';
   import ActionMenuItem from '../ui/ActionMenuItem.svelte';
 
   export let actionsForSelection: ActionParameterPair[] = [];
@@ -19,10 +20,12 @@
 
   const dispatch = createEventDispatcher<{
     actionsMenuFocused: boolean;
+    compareFiles: WorkspaceTreeNodeWithFullPath[];
+    compareRevisions: WorkspaceTreeNodeWithFullPath;
     copyFileLocation: void;
     copyFullPath: void;
     delete: WorkspaceTreeNodeWithFullPath[];
-    download: void;
+    download: { withRevision: boolean };
     hide: void;
     importFile: void;
     move: WorkspaceTreeNodeWithFullPath[];
@@ -46,6 +49,13 @@
   let selectedFolderCount: number = 0;
   let selectedFileCount: number = 0;
   let fileCountPhrase: string = '';
+
+  /** A single, non-directory selection can offer a plain or revision-versioned download name. */
+  $: canDownloadWithRevision =
+    selectedWorkspaceNodes.length === 1 && selectedWorkspaceNodes[0].type !== WorkspaceContentType.Directory;
+  $: downloadExtension = canDownloadWithRevision
+    ? separateFilenameFromExtension(selectedWorkspaceNodes[0].name ?? '').extension
+    : 'seqN.txt';
 
   $: {
     selectedFolderCount = 0;
@@ -136,11 +146,50 @@
     </ContextMenu.Item>
   </div>
 </ContextMenu.Group>
+{#if selectedFolderCount === 0 && selectedWorkspaceNodes.length >= 1}
+  <ContextMenu.Separator />
+  {#if selectedWorkspaceNodes.length === 1}
+    <ContextMenu.Item
+      size="sm"
+      on:click={() => dispatch('compareRevisions', selectedWorkspaceNodes[0])}
+      aria-label="Compare revisions for file"
+    >
+      Compare revisions for file
+    </ContextMenu.Item>
+  {:else}
+    <ContextMenu.Item
+      size="sm"
+      disabled={selectedWorkspaceNodes.length !== 2}
+      on:click={() => dispatch('compareFiles', selectedWorkspaceNodes)}
+      aria-label="Compare selected files"
+    >
+      Compare selected files
+    </ContextMenu.Item>
+  {/if}
+{/if}
 <ContextMenu.Separator />
 <div>
-  <ContextMenu.Item size="sm" on:click={() => dispatch('download')} aria-label="Download File">
-    Download
-  </ContextMenu.Item>
+  <ContextMenu.Sub>
+    <ContextMenu.SubTrigger size="sm">Download</ContextMenu.SubTrigger>
+    <ContextMenu.SubContent>
+      <ContextMenu.Item
+        size="sm"
+        class="whitespace-nowrap"
+        on:click={() => dispatch('download', { withRevision: false })}
+        aria-label="Download File"
+      >
+        Download (...{downloadExtension})
+      </ContextMenu.Item>
+      <ContextMenu.Item
+        size="sm"
+        class="whitespace-nowrap"
+        on:click={() => dispatch('download', { withRevision: true })}
+        aria-label="Download File with revision"
+      >
+        Download with revision (...a.{downloadExtension})
+      </ContextMenu.Item>
+    </ContextMenu.SubContent>
+  </ContextMenu.Sub>
   {#if selectedWorkspaceNodes.length === 1}
     <ContextMenu.Item size="sm" on:click={() => dispatch('copyFullPath')} aria-label="Copy Full Path">
       Copy Full Path

@@ -21,6 +21,7 @@
   import type { ActionDefinition } from '../../types/actions';
   import type { LintDiagnostic } from '../../types/console';
   import type { DownloadMenuOption } from '../../types/dropdown';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { getLintDiagnostics } from '../../utilities/codemirror/lint';
   import { readOnlyChangeGuard } from '../../utilities/codemirror/readOnly';
@@ -43,18 +44,16 @@
   import OutputToolbar from './OutputToolbar.svelte';
 
   export let availableActions: { action: ActionDefinition; parameter: string }[] = [];
+  export let doesWorkingCopyMatchRevision: boolean = false;
   export let fileMetadata: WorkspaceFileMetadata | null = null;
   export let phoenixContext: PhoenixContext | undefined;
-  /** Whether the file has any revisions at all; the "Download with revision" option is hidden when false. */
-  export let hasRevisions: boolean = false;
   export let includeActions: boolean = false;
   export let preserveAdaptationLog: boolean = false;
   export let isLoading: boolean = false;
   export let isInputFile: boolean = false;
-  /** The working copy's matching revision letter, if any; null when it has revisions but doesn't match one. */
-  export let matchingRevisionName: string | null = null;
   export let previewOnly: boolean = false;
   export let readOnly: boolean = false;
+  export let revisionList: WorkspaceFileRevision[] = [];
   export let sequenceAdaptation: PhoenixAdaptation;
   export let sequenceName: string = '';
   export let sequenceFilePath: string = '';
@@ -311,17 +310,19 @@
    */
   function downloadOptionsFor(
     name: string,
-    revisionName: string | null,
-    fileHasRevisions: boolean,
+    doesWorkingCopyMatchRevision: boolean,
+    revisionList: WorkspaceFileRevision[],
   ): DownloadMenuOption[] {
     const { extension } = separateFilenameFromExtension(name);
-    const options: DownloadMenuOption[] = [{ label: `Download (..${extension})`, name }];
-    if (fileHasRevisions) {
+    const options: DownloadMenuOption[] = [{ label: `Download (...${extension})`, name }];
+    if (revisionList.length > 0) {
+      const versionedFilename = revisionList[0].name ? getVersionedFileName(name, revisionList[0].name) : name;
+      const { extension: versionedExtension } = separateFilenameFromExtension(versionedFilename);
       options.unshift({
-        disabled: !revisionName,
-        disabledReason: revisionName ? undefined : "The working copy doesn't match a revision.",
-        label: `Download with revision (..${extension})`,
-        name: revisionName ? getVersionedFileName(name, revisionName) : name,
+        disabled: !doesWorkingCopyMatchRevision,
+        disabledReason: doesWorkingCopyMatchRevision ? undefined : "The working copy doesn't match a revision.",
+        label: `Download with revision (...${versionedExtension})`,
+        name: versionedFilename,
       });
     }
     return options;
@@ -499,7 +500,7 @@
           showDownloadButton
           downloadDisabled={disableCopyAndExport}
           downloadLabel="Download sequence contents"
-          downloadOptions={downloadOptionsFor(sequenceName, matchingRevisionName, hasRevisions)}
+          downloadOptions={downloadOptionsFor(sequenceName, doesWorkingCopyMatchRevision, revisionList)}
           onDownload={downloadInputFormat}
           showSaveButton={!(readOnly || previewOnly || isLoading)}
           saveDisabled={!isSequenceDefinitionUpdated}
@@ -536,8 +537,8 @@
                       sequenceAdaptation.input.fileExtension,
                       selectedOutputFormat.fileExtension,
                     ),
-                    matchingRevisionName,
-                    hasRevisions,
+                    doesWorkingCopyMatchRevision,
+                    revisionList,
                   )
                 : []}
               on:copyOutput={copyOutputFormatToClipboard}
