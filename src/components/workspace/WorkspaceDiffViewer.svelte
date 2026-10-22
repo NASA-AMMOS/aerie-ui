@@ -20,10 +20,16 @@
   export let languageExtension: Extension | null = null;
   /** The editor buffer ("Mine"); always shown. */
   export let mine: string;
+  /** Subtext under the "Mine" header, e.g. who last edited it and when. */
+  export let mineEditBy: string | null = null;
+  export let mineEditedAt: string | null = null;
   /** Header over the "Mine" pane; defaults to the save-conflict wording. */
   export let mineLabel: string | null = null;
   /** Current server content ("Theirs"). When null the file was deleted — "Mine" shows alone. */
   export let theirs: string | null;
+  /** Subtext under the "Theirs" header, e.g. who last edited it and when. */
+  export let theirsEditBy: string | null = null;
+  export let theirsEditedAt: string | null = null;
   /** Header over the "Theirs" pane. */
   export let theirsLabel: string = 'Theirs (server)';
   /** File type, used to pick the fallback language extension. */
@@ -142,10 +148,24 @@
     class:grid-cols-2={!isSinglePane}
   >
     {#if !isSinglePane}
-      <div class="border-r px-3 py-1.5 text-muted-foreground">{theirsLabel}</div>
+      <div class="grid grid-cols-[1fr_1fr] px-3 py-1.5 text-muted-foreground">
+        <div>{theirsLabel}</div>
+        {#if theirsEditBy || theirsEditedAt}
+          <div class="st-typography-body text-right text-xs">
+            <div>{theirsEditBy}</div>
+            <div>{theirsEditedAt}</div>
+          </div>
+        {/if}
+      </div>
     {/if}
-    <div class="px-3 py-1.5 text-muted-foreground">
-      {mineLabel ?? (editable ? 'Mine (editable)' : 'Mine (your edits)')}
+    <div class="grid grid-cols-[1fr_1fr] border-l px-3 py-1.5 text-muted-foreground">
+      <div>{mineLabel ?? (editable ? 'Mine (editable)' : 'Mine (your edits)')}</div>
+      {#if mineEditBy || mineEditedAt}
+        <div class="st-typography-body text-right text-xs">
+          <div>{mineEditBy}</div>
+          <div>{mineEditedAt}</div>
+        </div>
+      {/if}
     </div>
   </div>
   <!-- Scroll the whole diff here so both panes stay aligned (MergeView's recommended setup). -->

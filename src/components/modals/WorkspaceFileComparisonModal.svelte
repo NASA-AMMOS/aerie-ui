@@ -26,6 +26,8 @@
   interface SideState {
     content: string;
     error: boolean;
+    lastEditedAt: string | null;
+    lastEditedBy: string | null;
     loading: boolean;
     metadata: Record<string, unknown> | null;
   }
@@ -39,7 +41,14 @@
   const dispatch = createEventDispatcher<{ close: void }>();
   // Runtime/derived fields: not part of a revision, so not a difference.
   const unversionedKeys = ['lastEditedAt', 'lastEditedBy', 'readOnly'];
-  const emptySideState: SideState = { content: '', error: false, loading: true, metadata: null };
+  const emptySideState: SideState = {
+    content: '',
+    error: false,
+    lastEditedAt: null,
+    lastEditedBy: null,
+    loading: true,
+    metadata: null,
+  };
 
   let changedLines: number = 0;
   let isLoading: boolean;
@@ -111,15 +120,29 @@
           WorkspaceApi.getFileContent(workspaceId, filePath, user),
           WorkspaceApi.getFileMetadata(workspaceId, filePath, user),
         ]);
-        return { content, error: false, loading: false, metadata };
+        return {
+          content,
+          error: false,
+          lastEditedAt: metadata?.lastEditedAt ?? null,
+          lastEditedBy: metadata?.lastEditedBy ?? null,
+          loading: false,
+          metadata,
+        };
       }
       const [content, { metadata }] = await Promise.all([
         WorkspaceApi.getFileRevisionContent(workspaceId, filePath, side.revision.name, user),
         WorkspaceApi.getFileRevision(workspaceId, filePath, side.revision.name, user),
       ]);
-      return { content, error: false, loading: false, metadata };
+      return {
+        content,
+        error: false,
+        lastEditedAt: side.revision.lastEditedAt,
+        lastEditedBy: side.revision.lastEditedBy,
+        loading: false,
+        metadata,
+      };
     } catch {
-      return { content: '', error: true, loading: false, metadata: null };
+      return { content: '', error: true, lastEditedAt: null, lastEditedBy: null, loading: false, metadata: null };
     }
   }
 
@@ -247,8 +270,12 @@
         <WorkspaceDiffViewer
           theirs={leftState.content}
           theirsLabel={leftLabel}
+          theirsEditBy={leftState.lastEditedBy}
+          theirsEditedAt={leftState.lastEditedAt}
           mine={rightState.content}
           mineLabel={rightLabel}
+          mineEditBy={rightState.lastEditedBy}
+          mineEditedAt={rightState.lastEditedAt}
           {type}
           on:stats={e => (changedLines = e.detail.changedLines)}
         />
