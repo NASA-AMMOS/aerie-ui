@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { Button } from '@nasa-jpl/stellar-svelte';
-  import { LoaderCircle } from 'lucide-svelte';
+  import { Info, LoaderCircle } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';
   import { activeDocument, activeDocumentIsDirty } from '../../stores/activeDocument';
   import { catchError } from '../../stores/console';
@@ -18,6 +18,7 @@
   import DownloadMenu from '../ui/DownloadMenu.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import * as Sidebar from '../ui/Sidebar/index.js';
+  import Tooltip from '../ui/Tooltip.svelte';
   import PanelHeader from './PanelHeader.svelte';
 
   export let doesWorkingCopyMatchRevision: boolean = false;
@@ -253,11 +254,21 @@
                             title="Preview revision {revision.name}"
                             on:click={() => onPreview(revision)}
                           >
-                            <span class="w-6 flex-none text-sm font-semibold">{revision.name}</span>
-                            <span class="flex min-w-0 flex-col text-muted-foreground">
+                            <div class="w-6 flex-none text-sm font-semibold">{revision.name}</div>
+                            <div class="flex min-w-0 flex-col text-muted-foreground">
                               <span class="truncate">{revision.createdBy ?? 'Unknown'}</span>
                               <span>{formatDate(revision.createdAt)}</span>
-                            </span>
+                            </div>
+                            {#if revision.message}
+                              <div class="ml-auto self-start">
+                                <Tooltip
+                                  content={revision.message}
+                                  wrapperClass="flex-none self-center text-muted-foreground"
+                                >
+                                  <Info size={14} />
+                                </Tooltip>
+                              </div>
+                            {/if}
                           </button>
                           <DownloadMenu
                             align="end"
