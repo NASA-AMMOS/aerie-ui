@@ -190,6 +190,7 @@
   let loadingSpinnerTimeout: ReturnType<typeof setTimeout> | null = null;
   let logLevelLabel: string = 'Default levels';
   let logLevels: LogLevel[] = defaultLogLevels;
+  let matchingRevisionName: string | null = null;
   let panelsReady: boolean = false;
   let parameterDictionaries: ParameterDictionary[] = [];
   let phoenixContext: PhoenixContext;
@@ -729,6 +730,8 @@
   async function loadRevisions(path: string | null) {
     if (path !== selectedFilePath || !path) {
       revisionList = [];
+      matchingRevisionName = null;
+      doesWorkingCopyMatchRevision = false;
     }
     if (!path) {
       return;
@@ -747,6 +750,7 @@
         revisionLoadingAbortController.signal,
       );
       revisionList = revisions;
+      matchingRevisionName = matchingRevision;
       doesWorkingCopyMatchRevision = matchingRevision != null && matchingRevision === revisionList[0]?.name;
     } catch (e) {
       catchError('log', 'Failed to load revisions', e as Error);
@@ -2044,6 +2048,7 @@
               hasEditPermission={hasEditFilePermission}
               {isRevisionsLoading}
               isSequenceFile={activeFileIsInputSequence}
+              {matchingRevisionName}
               {phoenixContext}
               {commandInfoMapper}
               {revisionList}

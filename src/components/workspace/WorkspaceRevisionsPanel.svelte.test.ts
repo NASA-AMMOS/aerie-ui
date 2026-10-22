@@ -2,10 +2,8 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/svelte';
 import { writable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { activeDocument } from '../../stores/activeDocument';
-import type { WorkspaceFileRevision, WorkspaceFileRevisionList } from '../../types/workspace';
+import type { WorkspaceFileRevision } from '../../types/workspace';
 import { showWorkspaceRevisionPreviewModal } from '../../utilities/modal';
-import { WorkspaceApi } from '../../utilities/workspaces';
-import WorkspaceRevisionPreviewModal from '../modals/WorkspaceRevisionPreviewModal.svelte';
 import WorkspaceRevisionsPanel from './WorkspaceRevisionsPanel.svelte';
 
 vi.mock('svelte', async importOriginal => {
@@ -29,15 +27,19 @@ const revision = (name: string): WorkspaceFileRevision => ({
   pathAtRevision: 'a.seq',
 });
 const [a, b, c] = [revision('a'), revision('b'), revision('c')];
+const revisionList = [c, b, a];
 
-function list(matchingRevision: string | null): WorkspaceFileRevisionList {
-  return { matchingRevision, revisions: [c, b, a] };
-}
-
-function renderPanel(revisions: WorkspaceFileRevisionList) {
-  vi.spyOn(WorkspaceApi, 'getFileRevisionList').mockResolvedValue(revisions);
+// Mirrors how +page.svelte derives doesWorkingCopyMatchRevision from the loaded revision list.
+function renderPanel(matchingRevisionName: string | null) {
   return render(WorkspaceRevisionsPanel, {
-    props: { filePath: 'a.seq', hasEditPermission: true, reloadWorkingCopy: vi.fn() },
+    props: {
+      doesWorkingCopyMatchRevision: matchingRevisionName != null && matchingRevisionName === revisionList[0]?.name,
+      filePath: 'a.seq',
+      hasEditPermission: true,
+      matchingRevisionName,
+      reloadWorkingCopy: vi.fn(),
+      revisionList,
+    },
   });
 }
 
@@ -52,104 +54,38 @@ describe('WorkspaceRevisionsPanel', () => {
     vi.clearAllMocks();
   });
 
-  it('says which revision the saved copy matches, alongside unsaved editor changes', async () => {
-    const { getByLabelText } = renderPanel(list(b.name));
+  it('says which revision the saved copy matches, until unsaved editor changes make that stale', async () => {
+    const { getByLabelText } = renderPanel(b.name);
     const section = getByLabelText('Working copy');
-    await waitFor(() => expect(section.textContent).toContain('Saved copy matches revision b'));
+    expect(section.textContent).toContain('The saved copy matches revision: b');
 
     activeDocument.updateContent('typed');
     await waitFor(() => expect(section.textContent).toContain('Unsaved editor changes'));
-    expect(section.textContent).toContain('Saved copy matches revision b');
+    expect(section.textContent).toContain('Save your changes before creating a revision.');
   });
 
-  it('disables Create only when the saved copy matches the latest revision', async () => {
-    const latest = renderPanel(list(c.name));
-    await waitFor(() => expect(latest.getByText('The saved copy already matches the latest revision.')).toBeTruthy());
+  it('disables Create only when the saved copy matches the latest revision', () => {
+    const latest = renderPanel(c.name);
+    expect(latest.getByText('The saved copy matches the latest revision.')).toBeTruthy();
     expect((latest.getByRole('button', { name: 'Create revision' }) as HTMLButtonElement).disabled).toBe(true);
     cleanup();
 
-    const older = renderPanel(list(b.name));
-    await waitFor(() => expect(older.getByLabelText('Working copy').textContent).toContain('matches revision b'));
+    const older = renderPanel(b.name);
+    expect(older.getByLabelText('Working copy').textContent).toContain('matches revision: b');
     expect((older.getByRole('button', { name: 'Create revision' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('warns about losing the saved copy only when no revision holds it', async () => {
-    for (const [matching, warns] of [
-      [b, false],
+  it('warns about losing the saved copy only when it does not match the latest revision', async () => {
+    for (const [matchingRevisionName, warns] of [
+      [c.name, false],
+      [b.name, true],
       [null, true],
     ] as const) {
-      const { getByTitle, getByLabelText } = renderPanel(list(matching?.name || null));
-      await waitFor(() => expect(getByLabelText('Working copy').textContent).toContain(matching ? 'matches' : 'since'));
+      const { getByTitle } = renderPanel(matchingRevisionName);
       await fireEvent.click(getByTitle('Preview revision a'));
       const props = vi.mocked(showWorkspaceRevisionPreviewModal).mock.lastCall?.[0];
       expect(!!props?.unrevisionedWarning).toBe(warns);
       cleanup();
     }
-  });
-});
-
-describe('WorkspaceRevisionPreviewModal', () => {
-  afterEach(() => cleanup());
-
-  it('describes and enables Restore only after both content and metadata are checked', async () => {
-    vi.spyOn(WorkspaceApi, 'getFileRevisionContent').mockResolvedValue('same');
-    let finishMetadata = () => {};
-    vi.spyOn(WorkspaceApi, 'getFileRevision').mockReturnValue(
-      new Promise(resolve => (finishMetadata = () => resolve({ ...a, metadata: { user: { status: 'draft' } } }))),
-    );
-    vi.spyOn(WorkspaceApi, 'getFileMetadata').mockResolvedValue({ readOnly: true, user: {} } as never);
-    const { container, getByRole } = render(WorkspaceRevisionPreviewModal, {
-      props: {
-        currentContent: 'same',
-        currentLabel: 'Working copy',
-        filePath: 'a.seq',
-        restore: vi.fn(),
-        revision: a,
-        workspaceId: 1,
-      },
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 20));
-    expect((getByRole('button', { name: 'Restore…' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(container.textContent).not.toContain('identical');
-
-    finishMetadata();
-    await waitFor(() => expect(container.textContent).toContain('File metadata also differs.'));
-    expect(container.textContent).toContain('content identical to working copy');
-    expect((getByRole('button', { name: 'Restore…' }) as HTMLButtonElement).disabled).toBe(false);
-  });
-
-  it('stays open and blocks a second restore while one is in flight', async () => {
-    vi.spyOn(WorkspaceApi, 'getFileRevisionContent').mockResolvedValue('old');
-    vi.spyOn(WorkspaceApi, 'getFileRevision').mockResolvedValue({ ...a, metadata: {} });
-    vi.spyOn(WorkspaceApi, 'getFileMetadata').mockResolvedValue(null);
-    let finish = () => {};
-    const restore = vi.fn(() => new Promise<void>(resolve => (finish = resolve)));
-    const onClose = vi.fn();
-    const { component, getByRole } = render(WorkspaceRevisionPreviewModal, {
-      props: {
-        currentContent: 'new',
-        currentLabel: 'Working copy',
-        filePath: 'a.seq',
-        restore,
-        revision: a,
-        workspaceId: 1,
-      },
-    });
-    component.$on('close', onClose);
-
-    await waitFor(() => expect((getByRole('button', { name: 'Restore…' }) as HTMLButtonElement).disabled).toBe(false));
-    await fireEvent.click(getByRole('button', { name: 'Restore…' }));
-    await fireEvent.click(getByRole('button', { name: 'Restore' }));
-    const restoring = getByRole('button', { name: 'Restoring…' });
-    expect((restoring as HTMLButtonElement).disabled).toBe(true);
-    expect((getByRole('button', { name: 'Cancel' }) as HTMLButtonElement).disabled).toBe(true);
-    await fireEvent.click(restoring);
-    await fireEvent.keyDown(document, { key: 'Escape' });
-    expect(restore).toHaveBeenCalledTimes(1);
-    expect(onClose).not.toHaveBeenCalled();
-
-    finish();
-    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });

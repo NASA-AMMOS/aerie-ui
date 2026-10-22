@@ -27,6 +27,7 @@
   export let hasEditPermission: boolean = false;
   export let isReadOnly: boolean = false;
   export let isRevisionsLoading: boolean = false;
+  export let matchingRevisionName: string | null = null;
   export let revisionList: WorkspaceFileRevision[] = [];
   /** Reload the editor from the server after a restore changed (or failed to change) the working copy. */
   export let reloadWorkingCopy: () => Promise<void>;
@@ -38,7 +39,8 @@
 
   let baseEtag: string | null = null;
   let commitMessage: string = '';
-  let createDisabledReason: string | null = null;
+  let createDisabled: boolean = false;
+  let workingCopyStatus: string | null = null;
   let isCreating: boolean = false;
   let latest: WorkspaceFileRevision | null = null;
   let notice: string | null = null;
@@ -50,28 +52,70 @@
   $: baseFilename = filePath ? separateFilenameFromPath(filePath).filename : '';
 
   // Matching an older revision still allows a new one: returning to it is worth recording.
-  $: createDisabledReason = !hasEditPermission
-    ? "You don't have permission to create revisions."
-    : $activeDocumentIsDirty
-      ? 'Save your changes before creating a revision.'
-      : doesWorkingCopyMatchRevision
-        ? 'The saved copy already matches the latest revision.'
-        : null;
-  $: restoreDisabledReason = !hasEditPermission
-    ? "You don't have permission to restore revisions."
-    : isReadOnly
-      ? 'This file is read-only, so revisions can be previewed but not restored.'
-      : $activeDocumentIsDirty
-        ? 'Save or discard your unsaved changes before restoring a revision.'
-        : null;
+  $: workingCopyStatus = getWorkingCopyStatus(
+    hasEditPermission,
+    $activeDocumentIsDirty,
+    doesWorkingCopyMatchRevision,
+    matchingRevisionName,
+  );
+  $: createDisabled = getCreateDisabled(hasEditPermission, $activeDocumentIsDirty, doesWorkingCopyMatchRevision);
+  $: restoreDisabledReason = getRestoreDisabledReason(hasEditPermission, isReadOnly, $activeDocumentIsDirty);
 
   // The saved copy moves on open, save and restore (baseEtag). User-metadata edits happen in the Metadata tab, and
   // switching back remounts this panel. readOnly is runtime state, not part of a revision, so it never reloads.
   // baseEtag is pulled out so keystrokes (which change $activeDocument) don't refetch.
   $: baseEtag = $activeDocument.baseEtag;
 
+  function getWorkingCopyStatus(
+    hasEditPermission: boolean,
+    isDirty: boolean,
+    doesWorkingCopyMatchRevision: boolean,
+    matchingRevisionName: string | null,
+  ): string | null {
+    if (!hasEditPermission) {
+      return "You don't have permission to create revisions.";
+    }
+    if (isDirty) {
+      return 'Save your changes before creating a revision.';
+    }
+    if (doesWorkingCopyMatchRevision) {
+      return 'The saved copy matches the latest revision.';
+    }
+    if (matchingRevisionName) {
+      return `The saved copy matches revision: ${matchingRevisionName}`;
+    }
+    return null;
+  }
+
+  function getCreateDisabled(
+    hasEditPermission: boolean,
+    isDirty: boolean,
+    doesWorkingCopyMatchRevision: boolean,
+  ): boolean {
+    if (!hasEditPermission) {
+      return true;
+    }
+    if (isDirty) {
+      return true;
+    }
+    return doesWorkingCopyMatchRevision;
+  }
+
+  function getRestoreDisabledReason(hasEditPermission: boolean, isReadOnly: boolean, isDirty: boolean): string | null {
+    if (!hasEditPermission) {
+      return "You don't have permission to restore revisions.";
+    }
+    if (isReadOnly) {
+      return 'This file is read-only, so revisions can be previewed but not restored.';
+    }
+    if (isDirty) {
+      return 'Save or discard your unsaved changes before restoring a revision.';
+    }
+    return null;
+  }
+
   async function onCreate() {
-    if (!filePath || createDisabledReason) {
+    if (!filePath || workingCopyStatus) {
       return;
     }
     isCreating = true;
@@ -219,7 +263,7 @@
                   </div>
                 {/if}
                 <div class="flex min-h-[26px] items-center gap-2">
-                  <Button class="w-fit" disabled={!!createDisabledReason || isCreating} on:click={onCreate}>
+                  <Button class="w-fit" disabled={createDisabled || isCreating} on:click={onCreate}>
                     {isCreating ? 'Creating…' : 'Create revision'}
                   </Button>
                   {#if !latest}
@@ -235,8 +279,8 @@
                     </div>
                   {/if}
                 </div>
-                {#if createDisabledReason}
-                  <div class="text-muted-foreground">{createDisabledReason}</div>
+                {#if workingCopyStatus}
+                  <div class="text-muted-foreground">{workingCopyStatus}</div>
                 {/if}
                 {#if notice}
                   <div class="rounded border border-border bg-muted p-2" role="status">{notice}</div>

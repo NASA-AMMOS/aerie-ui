@@ -35,6 +35,7 @@
   export let hasEditPermission: boolean = false;
   export let isRevisionsLoading: boolean = false;
   export let isSequenceFile: boolean = false;
+  export let matchingRevisionName: string | null = null;
   export let phoenixContext: PhoenixContext;
   export let revisionList: WorkspaceFileRevision[] = [];
   export let reloadWorkingCopy: () => Promise<void>;
@@ -213,6 +214,7 @@
       {hasEditPermission}
       isReadOnly={!!fileMetadata?.readOnly}
       {isRevisionsLoading}
+      {matchingRevisionName}
       {revisionList}
       {reloadWorkingCopy}
       on:createdFileRevision
