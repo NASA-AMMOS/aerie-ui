@@ -23,7 +23,11 @@ describe('WorkspaceRevisionPreviewModal', () => {
     vi.spyOn(WorkspaceApi, 'getFileRevisionContent').mockResolvedValue('same');
     let finishMetadata = () => {};
     vi.spyOn(WorkspaceApi, 'getFileRevision').mockReturnValue(
-      new Promise(resolve => (finishMetadata = () => resolve({ ...a, metadata: { user: { status: 'draft' } } }))),
+      new Promise(
+        resolve =>
+          (finishMetadata = () =>
+            resolve({ fileMetadata: { metadata: { user: { status: 'draft' } } }, versionMetadata: { ...a } })),
+      ),
     );
     vi.spyOn(WorkspaceApi, 'getFileMetadata').mockResolvedValue({ readOnly: true, user: {} } as never);
     const { container, getByRole } = render(WorkspaceRevisionPreviewModal, {
@@ -39,17 +43,17 @@ describe('WorkspaceRevisionPreviewModal', () => {
 
     await new Promise(resolve => setTimeout(resolve, 20));
     expect((getByRole('button', { name: 'Restore…' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(container.textContent).not.toContain('File metadata also differs.');
+    expect(container.textContent).not.toContain('File metadata differs');
 
     finishMetadata();
-    await waitFor(() => expect(container.textContent).toContain('File metadata also differs.'));
-    expect(container.textContent).toContain('Content is differences');
+    await waitFor(() => expect(container.textContent).toContain('File metadata differs'));
+    expect(container.textContent).toContain('No content differences');
     expect((getByRole('button', { name: 'Restore…' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('stays open and blocks a second restore while one is in flight', async () => {
     vi.spyOn(WorkspaceApi, 'getFileRevisionContent').mockResolvedValue('old');
-    vi.spyOn(WorkspaceApi, 'getFileRevision').mockResolvedValue({ ...a, metadata: {} });
+    vi.spyOn(WorkspaceApi, 'getFileRevision').mockResolvedValue({ fileMetadata: {}, versionMetadata: { ...a } });
     vi.spyOn(WorkspaceApi, 'getFileMetadata').mockResolvedValue(null);
     let finish = () => {};
     const restore = vi.fn(() => new Promise<void>(resolve => (finish = resolve)));

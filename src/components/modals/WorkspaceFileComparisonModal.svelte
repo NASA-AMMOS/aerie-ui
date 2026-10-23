@@ -129,7 +129,7 @@
           metadata,
         };
       }
-      const [content, { metadata }] = await Promise.all([
+      const [content, { fileMetadata }] = await Promise.all([
         WorkspaceApi.getFileRevisionContent(workspaceId, filePath, side.revision.name, user),
         WorkspaceApi.getFileRevision(workspaceId, filePath, side.revision.name, user),
       ]);
@@ -139,7 +139,7 @@
         lastEditedAt: side.revision.lastEditedAt,
         lastEditedBy: side.revision.lastEditedBy,
         loading: false,
-        metadata,
+        metadata: fileMetadata,
       };
     } catch {
       return { content: '', error: true, lastEditedAt: null, lastEditedBy: null, loading: false, metadata: null };
