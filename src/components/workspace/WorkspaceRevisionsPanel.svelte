@@ -82,7 +82,7 @@
       return 'The saved copy matches the latest revision.';
     }
     if (matchingRevisionName) {
-      return `The saved copy matches revision: ${matchingRevisionName}`;
+      return `The saved copy matches revision ${matchingRevisionName}`;
     }
     return null;
   }

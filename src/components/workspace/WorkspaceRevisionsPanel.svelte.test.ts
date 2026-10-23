@@ -57,7 +57,7 @@ describe('WorkspaceRevisionsPanel', () => {
   it('says which revision the saved copy matches, until unsaved editor changes make that stale', async () => {
     const { getByLabelText } = renderPanel(b.name);
     const section = getByLabelText('Working copy');
-    expect(section.textContent).toContain('The saved copy matches revision: b');
+    expect(section.textContent).toContain('The saved copy matches revision b');
 
     activeDocument.updateContent('typed');
     await waitFor(() => expect(section.textContent).toContain('Unsaved editor changes'));
@@ -71,7 +71,7 @@ describe('WorkspaceRevisionsPanel', () => {
     cleanup();
 
     const older = renderPanel(b.name);
-    expect(older.getByLabelText('Working copy').textContent).toContain('matches revision: b');
+    expect(older.getByLabelText('Working copy').textContent).toContain('matches revision b');
     expect((older.getByRole('button', { name: 'Create revision' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
