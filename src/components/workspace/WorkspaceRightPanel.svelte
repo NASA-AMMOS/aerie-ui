@@ -12,6 +12,8 @@
     TimeTagInfo,
   } from '@nasa-jpl/plandev-sequence-languages';
   import { EditorView } from 'codemirror';
+  import { WorkspaceRightPanelTab } from '../../enums/workspace';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { unquoteUnescape } from '../../utilities/sequence-editor/sequence-utils';
   import CommandDictionaryComponent from '../sequencing/CommandPanel/CommandDictionary.svelte';
@@ -21,16 +23,22 @@
   import * as Sidebar from '../ui/Sidebar/index.js';
   import PanelHeader from './PanelHeader.svelte';
   import WorkspaceMetadataPanel from './WorkspaceMetadataPanel.svelte';
+  import WorkspaceRevisionsPanel from './WorkspaceRevisionsPanel.svelte';
 
-  export let activeTab: string = 'metadata';
-  export let commandNodeName: string | null = null;
-  export let editorSequenceView: EditorView | null = null;
+  export let activeTab: WorkspaceRightPanelTab = WorkspaceRightPanelTab.METADATA;
   export let commandInfoMapper: CommandInfoMapper | null = null;
-  export let filePath: string | null = null;
+  export let commandNodeName: string | null = null;
+  export let doesWorkingCopyMatchRevision: boolean = false;
+  export let editorSequenceView: EditorView | null = null;
   export let fileMetadata: WorkspaceFileMetadata | null = null;
+  export let filePath: string | null = null;
   export let hasEditPermission: boolean = false;
+  export let isRevisionsLoading: boolean = false;
   export let isSequenceFile: boolean = false;
+  export let matchingRevisionName: string | null = null;
   export let phoenixContext: PhoenixContext;
+  export let revisionList: WorkspaceFileRevision[] = [];
+  export let reloadWorkingCopy: () => Promise<void>;
 
   const emptyCommandDictionary: CommandDictionary = {
     enumMap: {},
@@ -98,7 +106,7 @@
   function onSelectCommandDefinition(event: CustomEvent<(FswCommand | HwCommand) | null>) {
     const { detail } = event;
     selectedCommandDefinition = detail;
-    activeTab = 'dictionary';
+    activeTab = WorkspaceRightPanelTab.DICTIONARY;
   }
 
   // Attach editor listener for tracking selected command
@@ -128,7 +136,7 @@
 </script>
 
 <div class="h-full w-full overflow-auto">
-  {#if activeTab === 'command' && isSequenceFile && editorSequenceView}
+  {#if activeTab === WorkspaceRightPanelTab.COMMAND && isSequenceFile && editorSequenceView}
     {#if phoenixContext.commandDictionary !== null && commandInfoMapper}
       <div class="grid h-full grid-rows-[min-content_auto]">
         <Sidebar.Header className="p-0">
@@ -171,7 +179,7 @@
         </svelte:fragment>
       </Panel>
     {/if}
-  {:else if activeTab === 'dictionary' && isSequenceFile}
+  {:else if activeTab === WorkspaceRightPanelTab.DICTIONARY && isSequenceFile}
     {#if phoenixContext.commandDictionary !== null}
       <div class="grid h-full grid-rows-[min-content_auto]">
         <Sidebar.Header className="p-0">
@@ -197,7 +205,19 @@
         </svelte:fragment>
       </Panel>
     {/if}
-  {:else if activeTab === 'metadata'}
+  {:else if activeTab === WorkspaceRightPanelTab.METADATA}
     <WorkspaceMetadataPanel {filePath} {fileMetadata} {hasEditPermission} on:updateUserMetadata />
+  {:else if activeTab === WorkspaceRightPanelTab.REVISIONS}
+    <WorkspaceRevisionsPanel
+      {doesWorkingCopyMatchRevision}
+      {filePath}
+      {hasEditPermission}
+      isReadOnly={!!fileMetadata?.readOnly}
+      {isRevisionsLoading}
+      {matchingRevisionName}
+      {revisionList}
+      {reloadWorkingCopy}
+      on:createdFileRevision
+    />
   {/if}
 </div>

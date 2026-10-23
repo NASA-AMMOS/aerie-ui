@@ -34,10 +34,40 @@ export type WorkspaceNodeEvent = {
 export type WorkspaceNodesEvent = {
   hasReadOnlyNodes?: boolean;
   treeNodes: WorkspaceTreeNodeWithFullPath[];
+  /** Whether a single-file download should be named with its matching revision's letter, if any. */
+  withRevision?: boolean;
 };
 
 export type ActionParameterPair = { action: ActionDefinition; parameter: string };
 
 export type WorkspaceNodeRunActionEvent = WorkspaceNodesEvent & {
   actionParameterPair: ActionParameterPair;
+};
+
+/** An explicit, immutable checkpoint of one file ("a", "b", ...). Never created by a save. */
+export type WorkspaceFileRevision = {
+  createdAt: string;
+  createdBy: string | null;
+  lastEditedAt: string | null;
+  lastEditedBy: string | null;
+  message: string;
+  name: string;
+  pathAtRevision: string;
+};
+
+/** A revision plus its versioned metadata as it was then (no readOnly or lastEdited*). */
+export type WorkspaceFileRevisionDetail = {
+  fileMetadata: Record<string, unknown>;
+  versionMetadata: WorkspaceFileRevision;
+};
+
+/** A file's revisions, oldest first, plus which of them (if any) holds the saved copy. */
+export type WorkspaceFileRevisionList = {
+  // fileId: string | null;
+  // latestRevision: WorkspaceFileRevision | null;
+  /** Newest revision whose content and versioned metadata equal the saved copy's; null if none does. */
+  matchingRevision: string | null;
+  revisions: WorkspaceFileRevision[];
+  /** Covers content plus versioned metadata; restore's If-Match. Not the editor's save ETag. */
+  // workingCopyETag: string;
 };

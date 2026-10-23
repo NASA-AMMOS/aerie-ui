@@ -20,13 +20,18 @@
   import { clearWorkspaceAdaptationMessages } from '../../stores/workspaceErrors';
   import type { ActionDefinition } from '../../types/actions';
   import type { LintDiagnostic } from '../../types/console';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { getLintDiagnostics } from '../../utilities/codemirror/lint';
   import { readOnlyChangeGuard } from '../../utilities/codemirror/readOnly';
   import { blockTheme } from '../../utilities/codemirror/themes/block';
   import { phoenixResources } from '../../utilities/sequence-editor/adaptation-resources';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
-  import { doesFilenameMatchExtension, replaceFileExtension } from '../../utilities/workspaces';
+  import {
+    doesFilenameMatchExtension,
+    getDownloadOptionsForFile,
+    replaceFileExtension,
+  } from '../../utilities/workspaces';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -37,6 +42,7 @@
   import OutputToolbar from './OutputToolbar.svelte';
 
   export let availableActions: { action: ActionDefinition; parameter: string }[] = [];
+  export let doesWorkingCopyMatchRevision: boolean = false;
   export let fileMetadata: WorkspaceFileMetadata | null = null;
   export let phoenixContext: PhoenixContext | undefined;
   export let includeActions: boolean = false;
@@ -45,6 +51,7 @@
   export let isInputFile: boolean = false;
   export let previewOnly: boolean = false;
   export let readOnly: boolean = false;
+  export let revisionList: WorkspaceFileRevision[] = [];
   export let sequenceAdaptation: PhoenixAdaptation;
   export let sequenceName: string = '';
   export let sequenceFilePath: string = '';
@@ -58,7 +65,7 @@
 
   const dispatch = createEventDispatcher<{
     adaptationError: { error: Error; filePath: string };
-    downloadInput: { filePath: string };
+    downloadInput: { filePath: string; filename: string };
     downloadOutput: { content: string; filePath: string; filename: string };
     editorViewChange: EditorView | null;
     lintChange: { diagnostics: LintDiagnostic[]; filePath: string };
@@ -282,26 +289,20 @@
     }
   }, 300);
 
-  function downloadOutputFormat(): void {
+  function downloadOutputFormat(event: CustomEvent<{ name: string }>): void {
     const content = editorOutputView.state.doc.toString();
 
     if (selectedOutputFormat) {
-      const filename = replaceFileExtension(
-        sequenceName,
-        sequenceAdaptation.input.fileExtension,
-        selectedOutputFormat.fileExtension,
-      );
-
       dispatch('downloadOutput', {
         content,
         filePath: sequenceFilePath,
-        filename,
+        filename: event.detail.name,
       });
     }
   }
 
-  function downloadInputFormat(): void {
-    dispatch('downloadInput', { filePath: sequenceFilePath });
+  function downloadInputFormat(name: string): void {
+    dispatch('downloadInput', { filePath: sequenceFilePath, filename: name });
   }
 
   async function copyOutputFormatToClipboard(): Promise<void> {
@@ -471,7 +472,12 @@
           onCopy={copyInputFormatToClipboard}
           showDownloadButton
           downloadDisabled={disableCopyAndExport}
-          downloadTooltip="Download sequence contents"
+          downloadLabel="Download sequence contents"
+          downloadOptions={getDownloadOptionsForFile(
+            sequenceName,
+            doesWorkingCopyMatchRevision,
+            revisionList[0]?.name ?? null,
+          )}
           onDownload={downloadInputFormat}
           showSaveButton={!(readOnly || previewOnly || isLoading)}
           saveDisabled={!isSequenceDefinitionUpdated}
@@ -501,6 +507,17 @@
               isPreviewOpen={toggleSeqJsonPreview}
               outputLanguages={sequenceAdaptation.outputs}
               outputDisabled={disableCopyAndExport}
+              downloadOptions={selectedOutputFormat
+                ? getDownloadOptionsForFile(
+                    replaceFileExtension(
+                      sequenceName,
+                      sequenceAdaptation.input.fileExtension,
+                      selectedOutputFormat.fileExtension,
+                    ),
+                    doesWorkingCopyMatchRevision,
+                    revisionList[0]?.name ?? null,
+                  )
+                : []}
               on:copyOutput={copyOutputFormatToClipboard}
               on:downloadOutput={downloadOutputFormat}
               on:togglePreview={toggleSeqJsonEditor}

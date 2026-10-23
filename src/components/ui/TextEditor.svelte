@@ -12,23 +12,27 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import type { ActionDefinition } from '../../types/actions';
   import type { LintDiagnostic } from '../../types/console';
+  import type { WorkspaceFileRevision } from '../../types/workspace';
   import type { WorkspaceFileMetadata } from '../../types/workspace-tree-view';
   import { getLintDiagnostics } from '../../utilities/codemirror/lint';
   import { readOnlyChangeGuard } from '../../utilities/codemirror/readOnly';
   import { blockTheme } from '../../utilities/codemirror/themes/block';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
+  import { getDownloadOptionsForFile } from '../../utilities/workspaces';
   import EditorToolbar from '../sequencing/EditorToolbar.svelte';
   import FileMetadataBanner from '../workspace/FileMetadataBanner.svelte';
   import Panel from './Panel.svelte';
   import SectionTitle from './SectionTitle.svelte';
 
   export let availableActions: { action: ActionDefinition; parameter: string }[] = [];
+  export let doesWorkingCopyMatchRevision: boolean = false;
   export let fileMetadata: WorkspaceFileMetadata | null = null;
   export let includeActions: boolean = false;
   export let isJSON: boolean = false;
   export let isLoading: boolean = false;
   export let previewOnly: boolean = false;
   export let readOnly: boolean = false;
+  export let revisionList: WorkspaceFileRevision[] = [];
   export let shouldListenForKeyboardSave: boolean = true;
   export let textFileContent: string = '';
   export let textFilePath: string = '';
@@ -180,7 +184,7 @@
     }
   }
 
-  function downloadInputFormat(): void {
+  function downloadInputFormat(_name: string): void {
     dispatch('download', { filePath: textFilePath });
   }
 
@@ -252,6 +256,12 @@
       onCopy={copyInputFormatToClipboard}
       showDownloadButton
       downloadDisabled={disableCopyAndExport}
+      downloadLabel="Download File Contents"
+      downloadOptions={getDownloadOptionsForFile(
+        textFileName,
+        doesWorkingCopyMatchRevision,
+        revisionList[0]?.name ?? null,
+      )}
       onDownload={downloadInputFormat}
       showSaveButton={!(readOnly || previewOnly || isLoading)}
       saveDisabled={!isTextContentUpdated}
